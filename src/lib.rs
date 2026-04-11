@@ -1,19 +1,22 @@
-use std::fs::OpenOptions;
-use std::io::Write;
+pub mod context;
+pub mod help;
+pub mod helper;
+pub mod parser;
+
+use crate::context::RequestContext;
 use std::process::Command;
 
-const REQUESTS_FILE: &str = "requests.txt";
+pub fn get_request(url: &str, ctx: &mut RequestContext) -> String {
+    let full_url = if let Some(base) = ctx.get_base_url()
+        && url.starts_with('/')
+    {
+        format!("{}{}", base, url)
+    } else {
+        url.to_string()
+    };
 
-pub fn get_request(url: &str) -> String {
-    let mut file = OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(REQUESTS_FILE)
-        .unwrap();
-
-    writeln!(file, "GET {url}").unwrap();
     let response = Command::new("curl")
-        .arg(url)
+        .arg(&full_url)
         .output()
         .map_err(|err| err.to_string())
         .unwrap();

@@ -1,7 +1,8 @@
 use std::fs::OpenOptions;
 use std::io::{self, Write};
 
-use reqsh::get_request;
+use crate::context::{RequestContext, RequestMethod};
+use crate::{get_request, help};
 
 pub struct ShellCommand {
     pub name: String,
@@ -147,7 +148,7 @@ impl ShellCommand {
         })
     }
 
-    pub fn execute(&self) -> ShellSignal {
+    pub fn execute(&self, ctx: &mut RequestContext) -> ShellSignal {
         let mut stdout: Box<dyn Write> = match &self.stdout {
             Some(file) => Box::new(
                 OpenOptions::new()
@@ -175,13 +176,73 @@ impl ShellCommand {
         match self.name.as_str() {
             "exit" => return ShellSignal::Exit,
             "help" => {
-                writeln!(stdout, "Available commands:").unwrap();
-                writeln!(stdout, "  help - Show this help message").unwrap();
-                writeln!(stdout, "  exit - Exit the shell").unwrap();
+                writeln!(stdout, "{}", help::get_help()).unwrap();
             }
             "GET" => {
-                let response = get_request(&self.args[0]);
+                let response = get_request(&self.args[0], ctx);
                 writeln!(stdout, "{response}").unwrap();
+            }
+            "set" => {
+                if self.args.len() == 2 && self.args[0] == "base_url" {
+                    ctx.set_base_url(&self.args[1]);
+                    writeln!(stdout, "Base URL set to: {}", self.args[1]).unwrap();
+                } else {
+                    writeln!(stderr, "Usage: set base_url <url>").unwrap();
+                }
+            }
+            "save" => {
+                if self.args.len() == 2 {
+                    writeln!(
+                        stdout,
+                        "Saving request '{}' as '{}'",
+                        self.args[1], self.args[0]
+                    )
+                    .unwrap();
+                    ctx.save_request(&self.args[0], RequestMethod::GET, &self.args[1]);
+                } else {
+                    writeln!(stderr, "Usage: save <request_name> <alias>").unwrap();
+                }
+            }
+            "run" => {
+                if self.args.len() == 1 {
+                    let url = ctx.get_saved_request(&self.args[0]).map(|r| r.url.clone());
+                    if let Some(url) = url {
+                        writeln!(stdout, "Running saved request '{}'", self.args[0]).unwrap();
+                        let response = get_request(&url, ctx);
+                        writeln!(stdout, "{response}").unwrap();
+                    } else {
+                        writeln!(
+                            stderr,
+                            "No saved request found with name '{}'",
+                            self.args[0]
+                        )
+                        .unwrap();
+                    }
+                } else {
+                    writeln!(stderr, "Usage: run <request_name>").unwrap();
+                }
+            }
+            "list" => {
+                writeln!(stdout, "Saved requests:").unwrap();
+                for name in ctx.list_saved_requests() {
+                    writeln!(stdout, "  {}", name).unwrap();
+                }
+            }
+            "delete" => {
+                if self.args.len() == 1 {
+                    if ctx.delete_saved_request(&self.args[0]) {
+                        writeln!(stdout, "Deleted saved request '{}'", self.args[0]).unwrap();
+                    } else {
+                        writeln!(
+                            stderr,
+                            "No saved request found with name '{}'",
+                            self.args[0]
+                        )
+                        .unwrap();
+                    }
+                } else {
+                    writeln!(stderr, "Usage: delete <request_name>").unwrap();
+                }
             }
             _ => {
                 writeln!(stdout, "Executing command: {}", self.name).unwrap();
