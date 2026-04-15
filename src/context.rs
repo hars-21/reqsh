@@ -1,33 +1,9 @@
+use crate::request::{Request, RequestMethod};
 use std::collections::HashMap;
 
 pub struct RequestContext {
     base_url: Option<String>,
     saved_requests: HashMap<String, Request>,
-}
-
-pub struct Request {
-    pub method: RequestMethod,
-    pub url: String,
-    pub _headers: Vec<(String, String)>,
-    pub _body: Option<String>,
-}
-
-pub enum RequestMethod {
-    GET,
-    POST,
-    PUT,
-    DELETE,
-}
-
-impl RequestMethod {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            RequestMethod::GET => "GET",
-            RequestMethod::POST => "POST",
-            RequestMethod::PUT => "PUT",
-            RequestMethod::DELETE => "DELETE",
-        }
-    }
 }
 
 impl RequestContext {
@@ -53,6 +29,7 @@ impl RequestContext {
             _headers: Vec::new(),
             _body: None,
         };
+
         self.saved_requests.insert(name.to_string(), request);
     }
 
