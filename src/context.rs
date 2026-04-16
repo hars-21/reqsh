@@ -26,8 +26,8 @@ impl RequestContext {
         let request = Request {
             method,
             url: url.to_string(),
-            _headers: Vec::new(),
-            _body: None,
+            headers: Vec::new(),
+            body: None,
         };
 
         self.saved_requests.insert(name.to_string(), request);

@@ -193,7 +193,15 @@ impl ShellCommand {
             "save" => {
                 if self.args.len() == 3 {
                     writeln!(stdout, "Saved request '{}'", self.args[0]).unwrap();
-                    ctx.save_request(&self.args[0], RequestMethod::GET, &self.args[2]);
+                    let method = match self.args[1].as_str() {
+                        "GET" => RequestMethod::GET,
+                        "POST" => RequestMethod::POST,
+                        "PUT" => RequestMethod::PUT,
+                        "DELETE" => RequestMethod::DELETE,
+                        _ => RequestMethod::GET,
+                    };
+
+                    ctx.save_request(&self.args[0], method, &self.args[2]);
                 } else {
                     writeln!(stderr, "Usage: save <request_name> <method> <url>").unwrap();
                 }
@@ -243,11 +251,25 @@ impl ShellCommand {
 
             "GET" => {
                 if self.args.len() == 1 {
-                    let request = Request::new(RequestMethod::GET, self.args[0].clone());
+                    let request = Request::new(RequestMethod::GET, self.args[0].clone(), None);
                     let response = request.fetch(ctx.get_base_url());
                     writeln!(stdout, "{}", response).unwrap();
                 } else {
                     writeln!(stderr, "Usage: GET <url>").unwrap();
+                }
+            }
+
+            "POST" => {
+                if self.args.len() >= 1 {
+                    let request = Request::new(
+                        RequestMethod::POST,
+                        self.args[0].clone(),
+                        Some(self.args[1].clone()),
+                    );
+                    let response = request.fetch(ctx.get_base_url());
+                    writeln!(stdout, "{}", response).unwrap();
+                } else {
+                    writeln!(stderr, "Usage POST <url> <body>").unwrap();
                 }
             }
 

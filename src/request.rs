@@ -3,8 +3,8 @@ use std::process::Command;
 pub struct Request {
     pub method: RequestMethod,
     pub url: String,
-    pub _headers: Vec<(String, String)>,
-    pub _body: Option<String>,
+    pub headers: Vec<(String, String)>,
+    pub body: Option<String>,
 }
 
 pub enum RequestMethod {
@@ -26,12 +26,12 @@ impl RequestMethod {
 }
 
 impl Request {
-    pub fn new(method: RequestMethod, url: String) -> Self {
+    pub fn new(method: RequestMethod, url: String, body: Option<String>) -> Self {
         Self {
             method,
             url,
-            _headers: Vec::new(),
-            _body: None,
+            headers: Vec::new(),
+            body,
         }
     }
 
@@ -41,8 +41,13 @@ impl Request {
             None => format!("{}", self.url),
         };
 
+        let body = match &self.body {
+            Some(data) => format!("{}", data),
+            None => format!(""),
+        };
+
         let response = Command::new("curl")
-            .arg(&full_url)
+            .args(["-X", &self.method.as_str(), &full_url, "-d", &body])
             .output()
             .map_err(|err| err.to_string())
             .unwrap();
