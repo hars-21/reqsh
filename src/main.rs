@@ -33,13 +33,18 @@ fn shell_loop() {
 
                 rl.add_history_entry(&line).unwrap();
 
-                let cmd = ShellCommand::build(&line).unwrap_or_else(|err| {
+                let cmd = ShellCommand::build(line).unwrap_or_else(|err| {
                     eprintln!("Error parsing arguments: {err}");
                     process::exit(1);
                 });
 
-                match cmd.execute(&mut ctx) {
-                    ShellSignal::Continue => {}
+                let result = cmd.execute(&mut ctx);
+                match result.signal {
+                    ShellSignal::Continue => {
+                        if let Some(output) = result.output {
+                            println!("{}", output);
+                        }
+                    }
                     ShellSignal::Exit => break,
                 }
             }

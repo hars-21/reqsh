@@ -1,6 +1,3 @@
-use std::fs::OpenOptions;
-use std::io::{self, Write};
-
 use crate::context::RequestContext;
 use crate::help;
 use crate::request::{Request, RequestMethod};
@@ -11,6 +8,11 @@ pub struct ShellCommand {
     pub stdout: Option<String>,
     pub stderr: Option<String>,
     pub append: bool,
+}
+
+pub struct ShellOutput {
+    pub signal: ShellSignal,
+    pub output: Option<String>,
 }
 
 enum RedirectType {
@@ -24,7 +26,7 @@ pub enum ShellSignal {
 }
 
 impl ShellCommand {
-    pub fn build(command_line: &str) -> Result<ShellCommand, &str> {
+    pub fn build(command_line: String) -> Result<ShellCommand, String> {
         let mut tokens = Vec::new();
         let mut current = String::new();
         let mut chars = command_line.chars().peekable();
@@ -141,58 +143,41 @@ impl ShellCommand {
         let (name, args) = tokens.split_first().unwrap();
 
         Ok(ShellCommand {
-            name: name.clone(),
-            args: args.to_vec(),
+            name: name.to_owned(),
+            args: args.to_owned(),
             stdout,
             stderr,
             append,
         })
     }
 
-    pub fn execute(&self, ctx: &mut RequestContext) -> ShellSignal {
-        let mut stdout: Box<dyn Write> = match &self.stdout {
-            Some(file) => Box::new(
-                OpenOptions::new()
-                    .create(true)
-                    .write(true)
-                    .append(self.append)
-                    .open(file)
-                    .unwrap(),
-            ),
-            None => Box::new(io::stdout()),
-        };
-
-        let mut stderr: Box<dyn Write> = match &self.stderr {
-            Some(file) => Box::new(
-                OpenOptions::new()
-                    .create(true)
-                    .write(true)
-                    .append(self.append)
-                    .open(file)
-                    .unwrap(),
-            ),
-            None => Box::new(io::stderr()),
-        };
+    pub fn execute(&self, ctx: &mut RequestContext) -> ShellOutput {
+        let mut output;
 
         match self.name.as_str() {
-            "exit" => return ShellSignal::Exit,
+            "exit" => {
+                return ShellOutput {
+                    signal: ShellSignal::Exit,
+                    output: None,
+                };
+            }
 
             "help" => {
-                writeln!(stdout, "{}", help::get_help()).unwrap();
+                output = format!("{}", help::get_help());
             }
 
             "set" => {
                 if self.args.len() == 2 && self.args[0] == "base_url" {
                     ctx.set_base_url(&self.args[1]);
-                    writeln!(stdout, "Base URL set to: {}", self.args[1]).unwrap();
+                    output = format!("Base URL set to: {}", self.args[1]);
                 } else {
-                    writeln!(stderr, "Usage: set base_url <url>").unwrap();
+                    output = format!("Usage: set base_url <url>");
                 }
             }
 
             "save" => {
                 if self.args.len() == 3 {
-                    writeln!(stdout, "Saved request '{}'", self.args[0]).unwrap();
+                    output = format!("Saved request '{}'", self.args[0]);
                     let method = match self.args[1].as_str() {
                         "GET" => RequestMethod::GET,
                         "POST" => RequestMethod::POST,
@@ -203,7 +188,7 @@ impl ShellCommand {
 
                     ctx.save_request(&self.args[0], method, &self.args[2]);
                 } else {
-                    writeln!(stderr, "Usage: save <request_name> <method> <url>").unwrap();
+                    output = format!("Usage: save <request_name> <method> <url>");
                 }
             }
 
@@ -211,41 +196,31 @@ impl ShellCommand {
                 if self.args.len() == 1 {
                     if let Some(request) = ctx.get_saved_request(&self.args[0]) {
                         let response = request.fetch(ctx.get_base_url());
-                        writeln!(stdout, "{response}").unwrap();
+                        output = format!("{response}");
                     } else {
-                        writeln!(
-                            stderr,
-                            "No saved request found with name '{}'",
-                            self.args[0]
-                        )
-                        .unwrap();
+                        output = format!("No saved request found with name '{}'", self.args[0]);
                     }
                 } else {
-                    writeln!(stderr, "Usage: run <request_name>").unwrap();
+                    output = format!("Usage: run <request_name>");
                 }
             }
 
             "list" => {
-                writeln!(stdout, "Saved requests:").unwrap();
+                output = format!("Saved requests:\n");
                 for name in ctx.list_saved_requests() {
-                    writeln!(stdout, "  {}", name).unwrap();
+                    output.push_str(&format!("  {}\n", name));
                 }
             }
 
             "delete" => {
                 if self.args.len() == 1 {
                     if ctx.delete_saved_request(&self.args[0]) {
-                        writeln!(stdout, "Deleted saved request '{}'", self.args[0]).unwrap();
+                        output = format!("Deleted saved request '{}'", self.args[0]);
                     } else {
-                        writeln!(
-                            stderr,
-                            "No saved request found with name '{}'",
-                            self.args[0]
-                        )
-                        .unwrap();
+                        output = format!("No saved request found with name '{}'", self.args[0]);
                     }
                 } else {
-                    writeln!(stderr, "Usage: delete <request_name>").unwrap();
+                    output = format!("Usage: delete <request_name>");
                 }
             }
 
@@ -253,9 +228,9 @@ impl ShellCommand {
                 if self.args.len() == 1 {
                     let request = Request::new(RequestMethod::GET, self.args[0].clone(), None);
                     let response = request.fetch(ctx.get_base_url());
-                    writeln!(stdout, "{}", response).unwrap();
+                    output = format!("{}", response);
                 } else {
-                    writeln!(stderr, "Usage: GET <url>").unwrap();
+                    output = format!("Usage: GET <url>");
                 }
             }
 
@@ -267,17 +242,20 @@ impl ShellCommand {
                         Some(self.args[1].clone()),
                     );
                     let response = request.fetch(ctx.get_base_url());
-                    writeln!(stdout, "{}", response).unwrap();
+                    output = format!("{}", response);
                 } else {
-                    writeln!(stderr, "Usage POST <url> <body>").unwrap();
+                    output = format!("Usage POST <url> <body>");
                 }
             }
 
             _ => {
-                writeln!(stdout, "Command not found: {}", self.name).unwrap();
+                output = format!("ReferenceError: {} is not defined", self.name);
             }
         }
 
-        ShellSignal::Continue
+        ShellOutput {
+            signal: ShellSignal::Continue,
+            output: Some(output),
+        }
     }
 }
