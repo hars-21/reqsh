@@ -41,6 +41,8 @@ reqsh> run getUsers
 - `list` — list saved requests
 - `delete <name>` — delete request
 - `set base_url <url>` — set base URL
+- `headers set <name> <key> <value>` - set headers for saved requests
+- `headers clear` - clear all headers
 - `exit` — quit
 - `help` — help
 

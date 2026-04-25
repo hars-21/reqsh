@@ -1,12 +1,12 @@
 use std::process;
 
-use rustyline::config::BellStyle;
 use rustyline::error::ReadlineError;
 use rustyline::{CompletionType, Config, EditMode, Editor};
 
 use reqsh::context::RequestContext;
+use reqsh::executor::{ShellSignal, execute};
 use reqsh::helper::ShellHelper;
-use reqsh::parser::{ShellCommand, ShellSignal};
+use reqsh::parser::ShellCommand;
 
 const HISTORY_FILE: &str = "history.txt";
 
@@ -15,7 +15,6 @@ fn shell_loop() {
         .history_ignore_space(true)
         .completion_type(CompletionType::List)
         .edit_mode(EditMode::Vi)
-        .bell_style(BellStyle::Audible)
         .build();
 
     let mut ctx = RequestContext::new();
@@ -38,7 +37,7 @@ fn shell_loop() {
                     process::exit(1);
                 });
 
-                let result = cmd.execute(&mut ctx);
+                let result = execute(&cmd, &mut ctx);
                 match result.signal {
                     ShellSignal::Continue => {
                         if let Some(output) = result.output {
