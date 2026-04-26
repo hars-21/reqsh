@@ -117,6 +117,29 @@ pub fn execute(cmd: &ShellCommand, ctx: &mut RequestContext) -> ShellOutput {
             }
         }
 
+        "env" => {
+            if cmd.args.len() == 1 && cmd.args[0] == "clear" {
+                ctx.clear_env_vars();
+                output = format!("Cleared all env variables");
+            } else if cmd.args.len() == 1 && cmd.args[0] == "list" {
+                output = format!("Env variables:\n");
+                for key in ctx.list_env_vars() {
+                    output.push_str(&format!("  {}\n", key));
+                }
+            } else if cmd.args.len() == 2 && cmd.args[0] == "delete" {
+                if let Some(value) = ctx.delete_env_var(&cmd.args[1]) {
+                    output = format!("Deleted variable: {} with value: {}", cmd.args[1], value);
+                } else {
+                    output = format!("Variable does not exist");
+                }
+            } else if cmd.args.len() == 3 && cmd.args[0] == "set" {
+                ctx.save_env_var(cmd.args[1].clone(), cmd.args[2].clone());
+                output = format!("Saved variable: {}", cmd.args[1]);
+            } else {
+                output = format!("Usage: env set <key> <value>");
+            }
+        }
+
         "GET" => {
             if cmd.args.len() == 1 {
                 let request = Request::new(Method::GET, cmd.args[0].clone());

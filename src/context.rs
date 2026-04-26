@@ -5,6 +5,7 @@ use crate::request::{Method, Request};
 pub struct RequestContext {
     base_url: Option<String>,
     saved_requests: HashMap<String, Request>,
+    env_vars: HashMap<String, String>,
 }
 
 impl RequestContext {
@@ -12,6 +13,7 @@ impl RequestContext {
         RequestContext {
             base_url: None,
             saved_requests: HashMap::new(),
+            env_vars: HashMap::new(),
         }
     }
 
@@ -42,5 +44,25 @@ impl RequestContext {
 
     pub fn delete_saved_request(&mut self, name: &str) -> bool {
         self.saved_requests.remove(name).is_some()
+    }
+
+    pub fn save_env_var(&mut self, key: String, value: String) {
+        self.env_vars.insert(key, value);
+    }
+
+    pub fn get_env_var(&self, key: &str) -> Option<&String> {
+        self.env_vars.get(key)
+    }
+
+    pub fn list_env_vars(&self) -> Vec<String> {
+        self.env_vars.keys().cloned().collect()
+    }
+
+    pub fn delete_env_var(&mut self, key: &str) -> Option<String> {
+        self.env_vars.remove(key)
+    }
+
+    pub fn clear_env_vars(&mut self) {
+        self.env_vars.clear()
     }
 }

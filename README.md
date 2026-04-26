@@ -43,6 +43,10 @@ reqsh> run getUsers
 - `set base_url <url>` — set base URL
 - `headers set <name> <key> <value>` - set headers for saved requests
 - `headers clear` - clear all headers
+- `env set <key> <value>` - set simple env variables
+- `env list` - list env variables
+- `env delete <key>` - delete variable
+- `env clear` - clear all env variables
 - `exit` — quit
 - `help` — help
 
