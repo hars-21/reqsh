@@ -36,6 +36,7 @@ reqsh> run getUsers
 
 - `GET <url>` — send GET request
 - `POST <url>` — send POST request
+- `PUT <url> <body>` - send PUT request
 - `save <name>` — save last request
 - `run <name>` — run saved request
 - `list` — list saved requests

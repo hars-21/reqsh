@@ -29,6 +29,7 @@ impl Request {
 pub enum Method {
     GET,
     POST,
+    PUT,
 }
 
 impl Method {
@@ -36,6 +37,7 @@ impl Method {
         match self {
             Method::GET => "GET",
             Method::POST => "POST",
+            Method::PUT => "PUT",
         }
     }
 }

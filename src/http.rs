@@ -30,16 +30,30 @@ pub fn fetch(request: &Request, base_url: Option<&str>) -> String {
                 Err(e) => return format!("{}", e),
             }
         }
+
         Method::POST => {
-            let res = if let Some(body) = &request.body {
-                client
-                    .post(full_url)
-                    .headers(headers)
-                    .body(body.clone())
-                    .send()
-            } else {
-                client.post(full_url).send()
-            };
+            let mut req_builder = client.post(full_url).headers(headers);
+
+            if let Some(body) = &request.body {
+                req_builder = req_builder.body(body.clone());
+            }
+
+            let res = req_builder.send();
+
+            match res {
+                Ok(response) => response.text().unwrap(),
+                Err(e) => format!("{}", e),
+            }
+        }
+
+        Method::PUT => {
+            let mut req_builder = client.put(full_url).headers(headers);
+
+            if let Some(body) = &request.body {
+                req_builder = req_builder.body(body.clone())
+            }
+
+            let res = req_builder.send();
 
             match res {
                 Ok(response) => response.text().unwrap(),

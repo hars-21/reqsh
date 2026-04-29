@@ -163,6 +163,17 @@ pub fn execute(cmd: &ShellCommand, ctx: &mut RequestContext) -> ShellOutput {
             }
         }
 
+        "PUT" => {
+            if cmd.args.len() == 2 {
+                let mut request = Request::new(Method::PUT, cmd.args[0].clone());
+                request.set_body(&cmd.args[1]);
+                let response = fetch(&request, ctx.get_base_url());
+                output = format!("{}", response);
+            } else {
+                output = format!("Usage: PUT <url> <body>");
+            }
+        }
+
         _ => {
             output = format!("ReferenceError: {} is not defined", cmd.name);
         }
