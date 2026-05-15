@@ -1,17 +1,18 @@
 use std::collections::HashMap;
 
+#[derive(Debug)]
 pub struct Request {
     pub method: Method,
-    pub url: String,
+    pub path: String,
     pub headers: HashMap<String, String>,
     pub body: Option<String>,
 }
 
 impl Request {
-    pub fn new(method: Method, url: String) -> Self {
+    pub fn new(method: Method, path: String) -> Self {
         Self {
             method,
-            url,
+            path,
             headers: HashMap::new(),
             body: None,
         }
@@ -26,6 +27,7 @@ impl Request {
     }
 }
 
+#[derive(Debug)]
 pub enum Method {
     GET,
     POST,

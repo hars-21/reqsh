@@ -4,14 +4,14 @@ use reqwest::{
     header::{HeaderMap, HeaderName, HeaderValue},
 };
 
-pub fn fetch(request: &Request, base_url: Option<&str>) -> String {
+pub fn fetch(request: &Request, base_url: Option<&str>) -> Result<String, String> {
     let client = Client::new();
-    let full_url = if (request.url.starts_with("/"))
+    let full_url = if (request.path.starts_with("/"))
         && let Some(base_url) = base_url
     {
-        format!("{base_url}{}", request.url)
+        format!("{base_url}{}", request.path)
     } else {
-        request.url.clone()
+        request.path.clone()
     };
 
     let mut headers = HeaderMap::new();
@@ -27,8 +27,8 @@ pub fn fetch(request: &Request, base_url: Option<&str>) -> String {
             let res = client.get(full_url).headers(headers).send();
 
             match res {
-                Ok(response) => response.text().unwrap(),
-                Err(e) => return format!("{}", e),
+                Ok(response) => Ok(response.text().unwrap()),
+                Err(e) => return Err(format!("{}", e)),
             }
         }
 
@@ -42,8 +42,8 @@ pub fn fetch(request: &Request, base_url: Option<&str>) -> String {
             let res = req_builder.send();
 
             match res {
-                Ok(response) => response.text().unwrap(),
-                Err(e) => format!("{}", e),
+                Ok(response) => Ok(response.text().unwrap()),
+                Err(e) => return Err(format!("{}", e)),
             }
         }
 
@@ -57,8 +57,8 @@ pub fn fetch(request: &Request, base_url: Option<&str>) -> String {
             let res = req_builder.send();
 
             match res {
-                Ok(response) => response.text().unwrap(),
-                Err(e) => format!("{}", e),
+                Ok(response) => Ok(response.text().unwrap()),
+                Err(e) => return Err(format!("{}", e)),
             }
         }
 
@@ -66,8 +66,8 @@ pub fn fetch(request: &Request, base_url: Option<&str>) -> String {
             let res = client.delete(full_url).headers(headers).send();
 
             match res {
-                Ok(response) => response.text().unwrap(),
-                Err(e) => format!("{}", e),
+                Ok(response) => Ok(response.text().unwrap()),
+                Err(e) => return Err(format!("{}", e)),
             }
         }
     }

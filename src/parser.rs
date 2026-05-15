@@ -1,139 +1,111 @@
-enum RedirectType {
-    Stdout,
-    Stderr,
+use std::collections::HashMap;
+
+use crate::request::{Method, Request};
+
+const METHODS: &[&str] = &["GET", "POST", "PUT", "DELETE"];
+const COMMANDS: &[&str] = &["base", "header", "help"];
+
+pub enum InputType {
+    Request,
+    Command,
+    Error(String),
+    Exit,
 }
 
-pub struct ShellCommand {
-    pub name: String,
-    pub args: Vec<String>,
-    pub stdout: Option<String>,
-    pub stderr: Option<String>,
-    pub append: bool,
+impl InputType {
+    pub fn get(line: &str) -> Self {
+        let tokens: Vec<&str> = line.split_whitespace().collect();
+        let first_token = tokens[0];
+        if first_token == "exit" {
+            InputType::Exit
+        } else if METHODS.contains(&first_token) {
+            InputType::Request
+        } else if COMMANDS.contains(&first_token) {
+            InputType::Command
+        } else {
+            InputType::Error(format!("Reference Error: {} not defined", first_token))
+        }
+    }
 }
 
-impl ShellCommand {
-    pub fn build(command_line: String) -> Result<ShellCommand, String> {
-        let mut tokens = Vec::new();
-        let mut current = String::new();
-        let mut chars = command_line.chars().peekable();
-        let mut pending_redirect: Option<RedirectType> = None;
-        let mut stdout: Option<String> = None;
-        let mut stderr: Option<String> = None;
-        let mut append = false;
+pub fn parse_request(buffer: String) -> Result<Request, String> {
+    if let Some((header_part, body_part)) = buffer.split_once("\n\n") {
+        let header_lines: Vec<&str> = header_part.split('\n').collect();
 
-        while let Some(c) = chars.next() {
-            match c {
-                '\'' => {
-                    while let Some(c) = chars.next() {
-                        if c == '\'' {
-                            break;
-                        } else {
-                            current.push(c);
-                        }
-                    }
+        let req_parts: Vec<&str> = header_lines[0].split_whitespace().collect();
+        if req_parts.len() != 2 {
+            return Err(format!("usage: METHOD <url> \n[headers]\n[body]"));
+        }
+
+        let method = match req_parts[0].to_lowercase().as_str() {
+            "get" => Method::GET,
+            "post" => Method::POST,
+            "put" => Method::PUT,
+            "delete" => Method::DELETE,
+            _ => panic!("Invalid Method"),
+        };
+        let path = req_parts[1];
+
+        let mut headers = HashMap::new();
+        if header_lines.len() > 1 {
+            for line in header_lines.iter().skip(1) {
+                if let Some((key, value)) = line.split_once(':') {
+                    headers.insert(key.trim().to_string(), value.trim().to_string());
+                } else {
+                    return Err(format!("Invalid headers"));
                 }
-
-                '"' => {
-                    while let Some(c) = chars.next() {
-                        if c == '"' {
-                            break;
-                        }
-                        if c == '\\' {
-                            if let Some(next) = chars.next() {
-                                match next {
-                                    '"' | '\\' | '$' | '\n' => current.push(next),
-                                    _ => {
-                                        current.push('\\');
-                                        current.push(next);
-                                    }
-                                }
-                            }
-                        } else {
-                            current.push(c);
-                        }
-                    }
-                }
-
-                '\\' => {
-                    if let Some(next) = chars.next() {
-                        current.push(next);
-                    }
-                }
-
-                ' ' | '\t' => {
-                    if !current.is_empty() {
-                        if let Some(rtype) = pending_redirect.take() {
-                            match rtype {
-                                RedirectType::Stdout => stdout = Some(current.clone()),
-                                RedirectType::Stderr => stderr = Some(current.clone()),
-                            }
-                        } else {
-                            tokens.push(current.clone());
-                        }
-                        current.clear();
-                    }
-                }
-
-                '1' => {
-                    if let Some('>') = chars.peek() {
-                        chars.next();
-                        pending_redirect = Some(RedirectType::Stdout);
-                        if let Some('>') = chars.peek() {
-                            chars.next();
-                            append = true;
-                        }
-                    } else {
-                        current.push('1');
-                    }
-                }
-
-                '2' => {
-                    if let Some('>') = chars.peek() {
-                        chars.next();
-                        pending_redirect = Some(RedirectType::Stderr);
-                        if let Some('>') = chars.peek() {
-                            chars.next();
-                            append = true;
-                        }
-                    } else {
-                        current.push('2');
-                    }
-                }
-
-                '>' => {
-                    if let Some('>') = chars.peek() {
-                        chars.next();
-                        pending_redirect = Some(RedirectType::Stdout);
-                        append = true;
-                    } else {
-                        pending_redirect = Some(RedirectType::Stdout);
-                    }
-                }
-
-                _ => current.push(c),
             }
         }
 
-        if !current.is_empty() {
-            if let Some(rtype) = pending_redirect.take() {
-                match rtype {
-                    RedirectType::Stdout => stdout = Some(current.clone()),
-                    RedirectType::Stderr => stderr = Some(current.clone()),
-                }
-            } else {
-                tokens.push(current.clone());
-            }
-            current.clear();
-        }
+        let body = if body_part.trim().is_empty() {
+            None
+        } else {
+            Some(body_part.trim().to_string())
+        };
 
-        let (name, args) = tokens.split_first().unwrap();
+        println!(
+            "{:?} \n{:?} \n{:?} \n{:?} \n{:?} \n{:?}",
+            header_part, header_lines, req_parts, headers, body_part, body
+        );
 
-        Ok(ShellCommand {
-            name: name.to_owned(),
-            args: args.to_owned(),
-            stdout,
-            stderr,
-            append,
+        Ok(Request {
+            method,
+            path: path.to_string(),
+            headers,
+            body,
         })
+    } else {
+        Err(format!("usage: METHOD <url> \n[headers]\n[body]"))
+    }
+}
+
+pub enum Command {
+    Base(String),
+    Header(String, String),
+    Help,
+}
+
+pub fn parse_command(line: &str) -> Result<Command, String> {
+    let tokens: Vec<&str> = line.split_whitespace().collect();
+    match tokens[0] {
+        "base" => {
+            if tokens.len() != 2 {
+                Err(format!("usage: base <url>"))
+            } else {
+                Ok(Command::Base(tokens[1].to_string()))
+            }
+        }
+        "header" => {
+            if tokens.len() != 3 {
+                Err(format!("usage: header <key> <value>"))
+            } else {
+                Ok(Command::Header(
+                    tokens[1].to_string(),
+                    tokens[2].to_string(),
+                ))
+            }
+        }
+        "help" => Ok(Command::Help),
+        _ => Err(format!("Invalid Command")),
     }
 }

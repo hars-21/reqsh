@@ -1,12 +1,10 @@
-use std::process;
-
+use reqsh::parser::{InputType, parse_command, parse_request};
 use rustyline::error::ReadlineError;
 use rustyline::{CompletionType, Config, EditMode, Editor};
 
-use reqsh::context::RequestContext;
-use reqsh::executor::{ShellSignal, execute};
+use reqsh::executor::{execute_command, execute_request};
 use reqsh::helper::ShellHelper;
-use reqsh::parser::ShellCommand;
+use reqsh::state::State;
 
 const HISTORY_FILE: &str = "history.txt";
 
@@ -17,7 +15,7 @@ fn shell_loop() {
         .edit_mode(EditMode::Vi)
         .build();
 
-    let mut ctx = RequestContext::new();
+    let mut ctx = State::new();
     let mut rl = Editor::with_config(config).unwrap();
     rl.set_helper(Some(ShellHelper));
     rl.load_history(HISTORY_FILE).unwrap_or_default();
@@ -30,21 +28,60 @@ fn shell_loop() {
                     continue;
                 }
 
-                rl.add_history_entry(&line).unwrap();
+                match InputType::get(&line) {
+                    InputType::Request => {
+                        let mut buffer = String::new();
+                        buffer.push_str(&line);
+                        buffer.push_str("\n");
+                        loop {
+                            let inner_rl = rl.readline("reqsh> ");
+                            if let Ok(inner_line) = inner_rl {
+                                buffer.push_str(&inner_line);
+                                buffer.push_str("\n");
 
-                let cmd = ShellCommand::build(line).unwrap_or_else(|err| {
-                    eprintln!("Error parsing arguments: {err}");
-                    process::exit(1);
-                });
+                                if buffer.ends_with("\n\n\n") {
+                                    break;
+                                }
+                            } else {
+                                break;
+                            }
+                        }
 
-                let result = execute(&cmd, &mut ctx);
-                match result.signal {
-                    ShellSignal::Continue => {
-                        if let Some(output) = result.output {
-                            println!("{}", output);
+                        rl.add_history_entry(&buffer).unwrap();
+
+                        match parse_request(buffer) {
+                            Ok(request) => {
+                                let result = execute_request(request, &mut ctx);
+                                match result {
+                                    Ok(c) => println!("{}", c),
+                                    Err(e) => println!("{}", e),
+                                }
+                            }
+
+                            Err(e) => println!("{}", e),
                         }
                     }
-                    ShellSignal::Exit => break,
+
+                    InputType::Command => {
+                        rl.add_history_entry(&line).unwrap();
+                        match parse_command(&line) {
+                            Ok(cmd) => {
+                                if let Err(e) = execute_command(cmd, &mut ctx) {
+                                    println!("{}", e);
+                                }
+                            }
+
+                            Err(e) => println!("{}", e),
+                        }
+                    }
+
+                    InputType::Error(e) => {
+                        println!("{e}")
+                    }
+
+                    InputType::Exit => {
+                        break;
+                    }
                 }
             }
 

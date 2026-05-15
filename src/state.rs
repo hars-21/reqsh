@@ -2,17 +2,19 @@ use std::collections::HashMap;
 
 use crate::request::{Method, Request};
 
-pub struct RequestContext {
+pub struct State {
     base_url: Option<String>,
     saved_requests: HashMap<String, Request>,
+    headers: HashMap<String, String>,
     env_vars: HashMap<String, String>,
 }
 
-impl RequestContext {
+impl State {
     pub fn new() -> Self {
-        RequestContext {
+        State {
             base_url: None,
             saved_requests: HashMap::new(),
+            headers: HashMap::new(),
             env_vars: HashMap::new(),
         }
     }
@@ -64,5 +66,9 @@ impl RequestContext {
 
     pub fn clear_env_vars(&mut self) {
         self.env_vars.clear()
+    }
+
+    pub fn set_header(&mut self, key: String, value: String) -> Option<String> {
+        self.headers.insert(key, value)
     }
 }
