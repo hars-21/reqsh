@@ -1,4 +1,4 @@
-use crate::{help::get_help, http::fetch, parser::Command, request::Request, state::State};
+use crate::{help::get_help, parser::Command, request::Request, runner::fetch, state::State};
 
 pub fn execute_command(cmd: Command, ctx: &mut State) -> Result<(), String> {
     match cmd {
