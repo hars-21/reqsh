@@ -20,6 +20,7 @@ pub fn execute_command(cmd: Command, ctx: &mut State) -> Result<(), String> {
 
 pub fn execute_request(req: Request, ctx: &mut State) -> Result<String, String> {
     let base_url = ctx.get_base_url();
+    let global_headers = ctx.get_headers();
 
-    fetch(&req, base_url)
+    fetch(&req, base_url, global_headers)
 }

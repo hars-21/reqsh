@@ -6,7 +6,7 @@ use reqsh::executor::{execute_command, execute_request};
 use reqsh::helper::ShellHelper;
 use reqsh::state::State;
 
-const HISTORY_FILE: &str = "history.txt";
+const HISTORY_FILE: &str = ".reqsh_history";
 
 fn shell_loop() {
     let config = Config::builder()

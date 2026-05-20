@@ -71,4 +71,8 @@ impl State {
     pub fn set_header(&mut self, key: String, value: String) -> Option<String> {
         self.headers.insert(key, value)
     }
+
+    pub fn get_headers(&self) -> &HashMap<String, String> {
+        &self.headers
+    }
 }

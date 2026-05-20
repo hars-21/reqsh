@@ -1,10 +1,16 @@
+use std::collections::HashMap;
+
 use crate::request::{Method, Request};
 use reqwest::{
     blocking::{Client, RequestBuilder},
     header::{HeaderMap, HeaderName, HeaderValue},
 };
 
-pub fn fetch(request: &Request, base_url: Option<&str>) -> Result<String, String> {
+pub fn fetch(
+    request: &Request,
+    base_url: Option<&str>,
+    global_headers: &HashMap<String, String>,
+) -> Result<String, String> {
     // Client
     let client = Client::new();
 
@@ -28,11 +34,19 @@ pub fn fetch(request: &Request, base_url: Option<&str>) -> Result<String, String
         Method::DELETE => client.delete(full_url),
     };
 
-    // Headers
+    //Global Headers
     let mut headers = HeaderMap::new();
+    for (key, value) in global_headers {
+        headers.insert(
+            HeaderName::from_bytes(key.to_ascii_lowercase().as_bytes()).unwrap(),
+            HeaderValue::from_bytes(value.as_bytes()).unwrap(),
+        );
+    }
+
+    // Request Headers
     for (key, value) in &request.headers {
         headers.insert(
-            HeaderName::from_bytes(key.as_bytes()).unwrap(),
+            HeaderName::from_bytes(key.to_ascii_lowercase().as_bytes()).unwrap(),
             HeaderValue::from_bytes(value.as_bytes()).unwrap(),
         );
     }
@@ -40,6 +54,7 @@ pub fn fetch(request: &Request, base_url: Option<&str>) -> Result<String, String
 
     // Body
     if let Some(body) = &request.body {
+        println!("{body}");
         req_builder = req_builder.body(body.clone());
     }
 
