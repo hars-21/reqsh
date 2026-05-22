@@ -4,6 +4,7 @@ use rustyline::error::ReadlineError;
 use rustyline::history::FileHistory;
 use rustyline::{CompletionType, Config, EditMode, Editor};
 
+use colored::Colorize;
 use reqsh::executor::execute;
 use reqsh::helper::ShellHelper;
 use reqsh::state::ShellState;
@@ -45,20 +46,29 @@ fn shell_loop() {
                     Ok(parsed) => match parsed {
                         Parsed::Builtin(cmd) => {
                             if let Err(e) = handle(cmd, &mut ctx, rl.history()) {
-                                println!("{}", e);
-                            };
+                                println!("{}", e.red().bold());
+                            }
                         }
 
-                        Parsed::Request(req) => {
-                            match execute(req, &ctx) {
-                                Ok(c) => println!("{c}"),
-                                Err(e) => println!("{e}"),
-                            };
-                        }
+                        Parsed::Request(req) => match execute(req, &ctx) {
+                            Ok(res) => {
+                                println!("{}", res);
+                            }
 
-                        Parsed::Exit => break,
+                            Err(e) => {
+                                println!("{}", e.red().bold());
+                            }
+                        },
+
+                        Parsed::Exit => {
+                            println!("{}", "Bye!".dimmed());
+                            break;
+                        }
                     },
-                    Err(e) => println!("{}", e),
+
+                    Err(e) => {
+                        println!("{}", e.red().bold());
+                    }
                 }
             }
 
@@ -88,12 +98,12 @@ fn collect_input(rl: &mut Editor<ShellHelper, FileHistory>, first_line: String) 
     loop {
         let inner_rl = rl.readline(".....> ");
         if let Ok(inner_line) = inner_rl {
-            buffer.push_str(&inner_line);
-            buffer.push_str("\n");
-
-            if buffer.ends_with("\n\n\n") {
+            if inner_line == "::send" {
                 break;
             }
+
+            buffer.push_str(&inner_line);
+            buffer.push_str("\n");
         } else {
             break;
         }

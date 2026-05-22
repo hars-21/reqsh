@@ -33,49 +33,62 @@ pub fn parse(input: String) -> Result<Parsed, String> {
 }
 
 fn parse_request(buffer: String) -> Result<Request, String> {
-    if let Some((header_part, body_part)) = buffer.split_once("\n\n") {
-        let header_lines: Vec<&str> = header_part.split('\n').collect();
+    let lines: Vec<&str> = buffer.lines().collect();
 
-        let req_parts: Vec<&str> = header_lines[0].split_whitespace().collect();
-        if req_parts.len() != 2 {
-            return Err(format!("usage: METHOD <url> \n[headers]\n[body]"));
+    if lines.is_empty() {
+        return Err("Empty request".to_string());
+    }
+
+    let req_parts: Vec<&str> = lines[0].split_whitespace().collect();
+
+    if req_parts.len() != 2 {
+        return Err("usage: METHOD <url>\n[headers]\n\n[body]\n::send".to_string());
+    }
+
+    let method = match req_parts[0].to_lowercase().as_str() {
+        "get" => Method::GET,
+        "post" => Method::POST,
+        "put" => Method::PUT,
+        "delete" => Method::DELETE,
+        _ => return Err("Invalid Method".to_string()),
+    };
+
+    let path = req_parts[1];
+
+    let mut headers = HashMap::new();
+    let mut body_lines = Vec::new();
+
+    let mut reading_body = false;
+
+    for line in lines.iter().skip(1) {
+        if line.trim().is_empty() {
+            reading_body = true;
+            continue;
         }
 
-        let method = match req_parts[0].to_lowercase().as_str() {
-            "get" => Method::GET,
-            "post" => Method::POST,
-            "put" => Method::PUT,
-            "delete" => Method::DELETE,
-            _ => panic!("Invalid Method"),
-        };
-        let path = req_parts[1];
-
-        let mut headers = HashMap::new();
-        if header_lines.len() > 1 {
-            for line in header_lines.iter().skip(1) {
-                if let Some((key, value)) = line.split_once(':') {
-                    headers.insert(key.trim().to_string(), value.trim().to_string());
-                } else {
-                    return Err(format!("Invalid headers"));
-                }
+        if reading_body {
+            body_lines.push(*line);
+        } else {
+            if let Some((key, value)) = line.split_once(':') {
+                headers.insert(key.trim().to_string(), value.trim().to_string());
+            } else {
+                return Err("Invalid headers".to_string());
             }
         }
-
-        let body = if body_part.trim().is_empty() {
-            None
-        } else {
-            Some(body_part.trim().to_string())
-        };
-
-        Ok(Request {
-            method,
-            path: path.to_string(),
-            headers,
-            body,
-        })
-    } else {
-        Err(format!("usage: METHOD <url> \n[headers]\n[body]"))
     }
+
+    let body = if body_lines.is_empty() {
+        None
+    } else {
+        Some(body_lines.join("\n"))
+    };
+
+    Ok(Request {
+        method,
+        path: path.to_string(),
+        headers,
+        body,
+    })
 }
 
 fn parse_builtin(line: String) -> Result<Builtin, String> {

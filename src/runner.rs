@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::request::{Method, Request};
 use reqwest::{
     blocking::{Client, RequestBuilder, Response},
-    header::{HeaderMap, HeaderName, HeaderValue},
+    header::{CONTENT_TYPE, HeaderMap, HeaderName, HeaderValue},
 };
 
 pub fn fetch(
@@ -52,11 +52,11 @@ pub fn fetch(
             HeaderValue::from_bytes(value.as_bytes()).unwrap(),
         );
     }
+    headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
     req_builder = req_builder.headers(headers);
 
     // Body
     if let Some(body) = &request.body {
-        println!("{body}");
         req_builder = req_builder.body(body.clone());
     }
 

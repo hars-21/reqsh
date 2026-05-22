@@ -2,6 +2,7 @@ use rustyline::history::FileHistory;
 
 use crate::{
     executor::execute,
+    help::help_text,
     parser::{Parsed, parse},
     state::ShellState,
 };
@@ -25,29 +26,7 @@ pub fn handle(cmd: Builtin, ctx: &mut ShellState, history: &FileHistory) -> Resu
         }
 
         Builtin::Help => {
-            let help = "
-Available Commands:
-
--------------------------------------------------
-    Requests:
-        Method <path>
-        [Headers]
-
-        [Body]
-
--------------------------------------------------
-        Methods -- GET, POST, PUT, DELETE
-
-        [Headers] -- <key> <value>
-        [Body] -- raw, json
--------------------------------------------------
-    Commands:
-        base <url>
-        header <key> <value>
-        exit
-        help
--------------------------------------------------
-    ";
+            let help = help_text();
             println!("{}", help);
         }
 
