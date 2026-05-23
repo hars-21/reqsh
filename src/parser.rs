@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::{
     builtin::Builtin,
     request::{Method, Request},
@@ -53,11 +51,11 @@ fn parse_request(buffer: String) -> Result<Request, String> {
         _ => return Err("Invalid Method".to_string()),
     };
 
-    let path = req_parts[1];
+    let path = req_parts[1].to_string();
 
-    let mut headers = HashMap::new();
+    let mut request = Request::new(method, path);
+
     let mut body_lines = Vec::new();
-
     let mut reading_body = false;
 
     for line in lines.iter().skip(1) {
@@ -70,25 +68,18 @@ fn parse_request(buffer: String) -> Result<Request, String> {
             body_lines.push(*line);
         } else {
             if let Some((key, value)) = line.split_once(':') {
-                headers.insert(key.trim().to_string(), value.trim().to_string());
+                request.set_header(key.trim().to_string(), value.trim().to_string());
             } else {
                 return Err("Invalid headers".to_string());
             }
         }
     }
 
-    let body = if body_lines.is_empty() {
-        None
-    } else {
-        Some(body_lines.join("\n"))
-    };
+    if !body_lines.is_empty() {
+        request.set_body(body_lines.join("\n"));
+    }
 
-    Ok(Request {
-        method,
-        path: path.to_string(),
-        headers,
-        body,
-    })
+    Ok(request)
 }
 
 fn parse_builtin(line: String) -> Result<Builtin, String> {
@@ -122,5 +113,49 @@ fn parse_builtin(line: String) -> Result<Builtin, String> {
             }
         }
         _ => Err(format!("Invalid Command")),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_get_request() {
+        let input = "GET /users".to_string();
+        let result = parse(input);
+
+        assert!(result.is_ok());
+
+        match result.unwrap() {
+            Parsed::Request(req) => {
+                assert_eq!(req.method, Method::GET);
+                assert_eq!(req.path, "/users");
+            }
+
+            _ => panic!("expected request"),
+        }
+    }
+
+    #[test]
+    fn parse_help_builtin() {
+        let input = "help".to_string();
+        let result = parse(input);
+
+        assert!(result.is_ok());
+
+        match result.unwrap() {
+            Parsed::Builtin(Builtin::Help) => {}
+
+            _ => panic!("expected help builtin"),
+        }
+    }
+
+    #[test]
+    fn parse_unknown_command_returns_error() {
+        let input = "something".to_string();
+        let result = parse(input);
+
+        assert!(result.is_err());
     }
 }

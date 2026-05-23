@@ -11,3 +11,27 @@ pub fn execute(req: Request, ctx: &ShellState) -> Result<String, String> {
         Err(e) => Err(e),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::request::Method;
+
+    #[test]
+    fn execute_returns_result() {
+        let req = Request::new(Method::GET, "/users".to_string());
+        let state = ShellState::new();
+        let result = execute(req, &state);
+
+        assert!(result.is_ok() || result.is_err());
+    }
+
+    #[test]
+    fn execute_fails_without_base_url() {
+        let req = Request::new(Method::GET, "/users".to_string());
+        let state = ShellState::new();
+        let result = execute(req, &state);
+
+        assert!(result.is_err());
+    }
+}

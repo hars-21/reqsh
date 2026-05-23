@@ -47,3 +47,38 @@ pub fn help_text() -> String {
         "─".repeat(50).dimmed(),
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn help_text_is_not_empty() {
+        let text = help_text();
+
+        assert!(!text.is_empty());
+    }
+
+    #[test]
+    fn help_text_contains_requests_section() {
+        let text = help_text();
+
+        assert!(text.contains("Requests"));
+    }
+
+    #[test]
+    fn help_text_contains_methods() {
+        let text = help_text();
+
+        assert!(text.contains("GET"));
+        assert!(text.contains("POST"));
+    }
+
+    #[test]
+    fn help_text_contains_commands() {
+        let text = help_text();
+
+        assert!(text.contains("help"));
+        assert!(text.contains("exit"));
+    }
+}
