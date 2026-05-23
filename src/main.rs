@@ -32,13 +32,12 @@ fn shell_loop() {
                 }
 
                 let tokens: Vec<&str> = line.split_whitespace().collect();
-                let methods = vec!["GET", "POST", "PUT", "DELETE"];
-                let raw;
-                if methods.contains(&tokens[0]) {
-                    raw = collect_input(&mut rl, line);
+                let methods = ["GET", "POST", "PUT", "DELETE"];
+                let raw = if methods.contains(&tokens[0]) {
+                    collect_input(&mut rl, line)
                 } else {
-                    raw = line;
-                }
+                    line
+                };
 
                 rl.add_history_entry(&raw).unwrap_or_default();
 
@@ -93,7 +92,7 @@ fn shell_loop() {
 fn collect_input(rl: &mut Editor<ShellHelper, FileHistory>, first_line: String) -> String {
     let mut buffer = String::new();
     buffer.push_str(&first_line);
-    buffer.push_str("\n");
+    buffer.push('\n');
 
     loop {
         let inner_rl = rl.readline(".....> ");
@@ -104,7 +103,7 @@ fn collect_input(rl: &mut Editor<ShellHelper, FileHistory>, first_line: String) 
                 }
 
                 buffer.push_str(&inner_line);
-                buffer.push_str("\n");
+                buffer.push('\n');
             }
 
             Err(ReadlineError::Interrupted) => {
@@ -124,7 +123,7 @@ fn collect_input(rl: &mut Editor<ShellHelper, FileHistory>, first_line: String) 
         }
     }
 
-    return buffer;
+    buffer
 }
 
 fn main() {

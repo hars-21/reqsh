@@ -65,6 +65,6 @@ pub fn fetch(
 
     match result {
         Ok(response) => Ok(response),
-        Err(e) => return Err(format!("{}", e)),
+        Err(e) => Err(format!("{}", e)),
     }
 }

@@ -16,7 +16,7 @@ pub fn parse(input: String) -> Result<Parsed, String> {
     match tokens[0] {
         "GET" | "POST" | "PUT" | "DELETE" => {
             let result = parse_request(input)?;
-            return Ok(Parsed::Request(result));
+            Ok(Parsed::Request(result))
         }
 
         "base" | "header" | "help" | "history" | "rerun" => {
@@ -66,12 +66,10 @@ fn parse_request(buffer: String) -> Result<Request, String> {
 
         if reading_body {
             body_lines.push(*line);
+        } else if let Some((key, value)) = line.split_once(':') {
+            request.set_header(key.trim().to_string(), value.trim().to_string());
         } else {
-            if let Some((key, value)) = line.split_once(':') {
-                request.set_header(key.trim().to_string(), value.trim().to_string());
-            } else {
-                return Err("Invalid headers".to_string());
-            }
+            return Err("Invalid headers".to_string());
         }
     }
 
@@ -87,14 +85,14 @@ fn parse_builtin(line: String) -> Result<Builtin, String> {
     match tokens[0] {
         "base" => {
             if tokens.len() != 2 {
-                Err(format!("usage: base <url>"))
+                Err("usage: base <url>".to_string())
             } else {
                 Ok(Builtin::Base(tokens[1].to_string()))
             }
         }
         "header" => {
             if tokens.len() != 3 {
-                Err(format!("usage: header <key> <value>"))
+                Err("usage: header <key> <value>".to_string())
             } else {
                 Ok(Builtin::Header(
                     tokens[1].to_string(),
@@ -106,13 +104,13 @@ fn parse_builtin(line: String) -> Result<Builtin, String> {
         "history" => Ok(Builtin::History),
         "rerun" => {
             if tokens.len() != 2 {
-                Err(format!("usage: rerun <index>"))
+                Err("usage: rerun <index>".to_string())
             } else {
                 let idx: usize = tokens[1].parse().unwrap();
                 Ok(Builtin::Rerun(idx))
             }
         }
-        _ => Err(format!("Invalid Command")),
+        _ => Err("Invalid Command".to_string()),
     }
 }
 

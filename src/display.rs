@@ -44,7 +44,7 @@ pub fn display_response(res: Response) -> String {
         output.push_str(&line);
     }
 
-    output.push_str("\n");
+    output.push('\n');
 
     let raw = res.text().unwrap_or_default();
     let body;
@@ -63,7 +63,7 @@ pub fn display_response(res: Response) -> String {
     }
 
     output.push_str(&body);
-    output.push_str("\n");
+    output.push('\n');
 
     output
 }

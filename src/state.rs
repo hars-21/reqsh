@@ -5,6 +5,12 @@ pub struct ShellState {
     headers: HashMap<String, String>,
 }
 
+impl Default for ShellState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ShellState {
     pub fn new() -> Self {
         ShellState {

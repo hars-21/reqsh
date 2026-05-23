@@ -50,7 +50,7 @@ pub fn handle(cmd: Builtin, ctx: &mut ShellState, history: &FileHistory) -> Resu
                             }
 
                             Parsed::Request(req) => {
-                                match execute(req, &ctx) {
+                                match execute(req, ctx) {
                                     Ok(c) => println!("{c}"),
                                     Err(e) => println!("{e}"),
                                 };
