@@ -1,4 +1,6 @@
-use reqsh::builtin::handle;
+use std::path::PathBuf;
+
+use reqsh::builtin::{ControlFlow, handle};
 use reqsh::parser::{Parsed, parse};
 use rustyline::error::ReadlineError;
 use rustyline::history::FileHistory;
@@ -9,7 +11,10 @@ use reqsh::executor::execute;
 use reqsh::helper::ShellHelper;
 use reqsh::state::ShellState;
 
-const HISTORY_FILE: &str = ".reqsh_history";
+fn history_path() -> PathBuf {
+    let home = dirs::home_dir().expect("could not determine home directory");
+    home.join(".reqsh_history")
+}
 
 fn shell_loop() {
     let config = Config::builder()
@@ -18,10 +23,11 @@ fn shell_loop() {
         .edit_mode(EditMode::Vi)
         .build();
 
+    let hist_path = history_path();
     let mut ctx = ShellState::new();
     let mut rl = Editor::with_config(config).unwrap();
     rl.set_helper(Some(ShellHelper));
-    rl.load_history(HISTORY_FILE).unwrap_or_default();
+    rl.load_history(&hist_path).unwrap_or_default();
 
     loop {
         let readline = rl.readline("reqsh> ");
@@ -43,11 +49,15 @@ fn shell_loop() {
 
                 match parse(raw) {
                     Ok(parsed) => match parsed {
-                        Parsed::Builtin(cmd) => {
-                            if let Err(e) = handle(cmd, &mut ctx, rl.history()) {
+                        Parsed::Builtin(cmd) => match handle(cmd, &mut ctx, rl.history()) {
+                            Ok(ControlFlow::Continue) => {}
+                            Ok(ControlFlow::Exit) => {
+                                break;
+                            }
+                            Err(e) => {
                                 println!("{}", e.red().bold());
                             }
-                        }
+                        },
 
                         Parsed::Request(req) => match execute(req, &ctx) {
                             Ok(res) => {
@@ -86,7 +96,7 @@ fn shell_loop() {
         }
     }
 
-    rl.append_history(HISTORY_FILE).unwrap_or_default();
+    rl.append_history(&hist_path).unwrap_or_default();
 }
 
 fn collect_input(rl: &mut Editor<ShellHelper, FileHistory>, first_line: String) -> String {

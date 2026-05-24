@@ -1,4 +1,4 @@
-use rustyline::history::FileHistory;
+use rustyline::history::{FileHistory, History, SearchDirection};
 
 use crate::{
     executor::execute,
@@ -15,7 +15,16 @@ pub enum Builtin {
     Rerun(usize),
 }
 
-pub fn handle(cmd: Builtin, ctx: &mut ShellState, history: &FileHistory) -> Result<(), String> {
+pub enum ControlFlow {
+    Continue,
+    Exit,
+}
+
+pub fn handle(
+    cmd: Builtin,
+    ctx: &mut ShellState,
+    history: &FileHistory,
+) -> Result<ControlFlow, String> {
     match cmd {
         Builtin::Base(url) => {
             ctx.set_base_url(&url);
@@ -31,41 +40,40 @@ pub fn handle(cmd: Builtin, ctx: &mut ShellState, history: &FileHistory) -> Resu
         }
 
         Builtin::History => {
-            for line in history.iter() {
-                println!("{}", line);
+            for (id, line) in history.iter().enumerate() {
+                println!("{:>4}: {}", id + 1, line.trim());
             }
         }
 
         Builtin::Rerun(index) => {
-            let mut it = 0;
-            for line in history.iter() {
-                it += 1;
-                if it == index {
-                    match parse(line.to_string()) {
-                        Ok(parsed) => match parsed {
-                            Parsed::Builtin(cmd) => {
-                                if let Err(e) = handle(cmd, ctx, history) {
-                                    println!("{}", e);
-                                };
-                            }
+            if index == 0 {
+                return Err("history indices start at 1".into());
+            }
 
-                            Parsed::Request(req) => {
-                                match execute(req, ctx) {
-                                    Ok(c) => println!("{c}"),
-                                    Err(e) => println!("{e}"),
-                                };
-                            }
+            let line = history
+                .get(index - 1, SearchDirection::Forward)
+                .map_err(|e| e.to_string())?
+                .ok_or_else(|| format!("history entry not found: {}", index))?;
 
-                            Parsed::Exit => break,
-                        },
-                        Err(e) => println!("{}", e),
-                    }
+            let parsed = parse(line.entry.to_string())?;
+
+            match parsed {
+                Parsed::Builtin(cmd) => {
+                    handle(cmd, ctx, history)?;
                 }
+
+                Parsed::Request(req) => {
+                    let response = execute(req, ctx).map_err(|e| e.to_string())?;
+
+                    println!("{response}");
+                }
+
+                Parsed::Exit => return Ok(ControlFlow::Exit),
             }
         }
     }
 
-    Ok(())
+    Ok(ControlFlow::Continue)
 }
 
 #[cfg(test)]

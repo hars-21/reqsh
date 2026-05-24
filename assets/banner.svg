@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 220" width="800" height="220">
+  <defs>
+    <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="50%" style="stop-color:#16213e"/>
+      <stop offset="100%" style="stop-color:#0f0f23"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#e94560"/>
+      <stop offset="100%" style="stop-color:#ff6b81"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="220" rx="16" fill="url(#bg2)"/>
+
+  <!-- Terminal icon on left -->
+  <g transform="translate(50, 50)">
+    <rect x="0" y="0" width="70" height="55" rx="6" fill="none" stroke="#e94560" stroke-width="3"/>
+    <path d="M10 20 L25 32 L10 44" stroke="#e94560" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <line x1="33" y1="42" x2="58" y2="42" stroke="#e94560" stroke-width="3" stroke-linecap="round"/>
+    <rect x="0" y="0" width="70" height="12" rx="6" fill="#e94560" opacity="0.3"/>
+    <circle cx="10" cy="6" r="2.5" fill="#e94560"/>
+    <circle cx="20" cy="6" r="2.5" fill="#e94560"/>
+    <circle cx="30" cy="6" r="2.5" fill="#e94560"/>
+  </g>
+
+  <!-- Main title -->
+  <text x="165" y="85" font-family="'Courier New', monospace" font-size="58" font-weight="bold" fill="url(#accent)" letter-spacing="5">reqsh</text>
+  <text x="165" y="120" font-family="'Courier New', monospace" font-size="16" fill="#a0a0b0" letter-spacing="3">INTERACTIVE HTTP SHELL</text>
+
+  <!-- Terminal window at bottom -->
+  <g transform="translate(165, 135)">
+    <rect x="0" y="0" width="540" height="50" rx="6" fill="#0f0f23" stroke="#2a2a4a" stroke-width="1.5"/>
+    <rect x="0" y="0" width="540" height="4" rx="2" fill="#e94560" opacity="0.6"/>
+    <text x="15" y="30" font-family="'Courier New', monospace" font-size="14" fill="#e94560">reqsh&gt;</text>
+    <text x="105" y="30" font-family="'Courier New', monospace" font-size="14" fill="#a0a0b0">base https://api.example.com</text>
+  </g>
+</svg>
