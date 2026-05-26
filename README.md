@@ -43,6 +43,13 @@ The binary will be at `target/release/reqsh`.
 
 ## Usage
 
+CLI Options:
+
+```bash
+reqsh --help
+reqsh --version
+```
+
 Start the REPL:
 
 ```bash

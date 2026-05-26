@@ -1,6 +1,8 @@
+use std::env;
 use std::path::PathBuf;
 
 use reqsh::builtin::{ControlFlow, handle};
+use reqsh::help::help_text;
 use reqsh::parser::{Parsed, parse};
 use rustyline::error::ReadlineError;
 use rustyline::history::FileHistory;
@@ -10,6 +12,8 @@ use colored::Colorize;
 use reqsh::executor::execute;
 use reqsh::helper::ShellHelper;
 use reqsh::state::ShellState;
+
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn history_path() -> PathBuf {
     let home = dirs::home_dir().expect("could not determine home directory");
@@ -137,5 +141,31 @@ fn collect_input(rl: &mut Editor<ShellHelper, FileHistory>, first_line: String) 
 }
 
 fn main() {
-    shell_loop();
+    let args: Vec<String> = env::args().skip(1).collect();
+
+    match args.as_slice() {
+        [] => {
+            shell_loop();
+        }
+
+        [arg] if arg == "--help" || arg == "-h" => {
+            println!("{}", help_text())
+        }
+
+        [arg] if arg == "--version" || arg == "-v" => {
+            println!("reqsh {}", VERSION);
+        }
+
+        [unknown] => {
+            eprintln!("Unknown argument: {}", unknown);
+            eprintln!("Try 'reqsh --help'");
+            std::process::exit(1);
+        }
+
+        _ => {
+            eprintln!("Too many arguments");
+            eprintln!("Try 'reqsh --help'");
+            std::process::exit(1);
+        }
+    }
 }

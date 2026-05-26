@@ -8,6 +8,15 @@ pub fn help_text() -> String {
 {}
 
   {}:
+    reqsh
+
+  {}:
+    {}  Show help
+    {}  Show version
+
+{}
+
+  {}:
     {} <path>
     [Headers]
 
@@ -36,6 +45,11 @@ pub fn help_text() -> String {
 {}
 ",
         "reqsh help".bold().cyan(),
+        "─".repeat(50).dimmed(),
+        "Usage".yellow().bold(),
+        "Options".yellow().bold(),
+        "--help, -h".green().bold(),
+        "--version, -v".green().bold(),
         "─".repeat(50).dimmed(),
         "Requests".yellow().bold(),
         "Method".green().bold(),

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1 (2026-05-26)
+
+- Added `--version`, `-v` flags to display version
+- Added `--help`, `-h` flags to display help text
+
 ## 0.1.0 (2026-05-24)
 
 - Initial release
