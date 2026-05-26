@@ -24,7 +24,7 @@ Interactive HTTP shell for API workflows. Send HTTP requests, manage headers and
 ### Install script
 
 ```bash
-curl -fsSL https://github.com/hars-21/reqsh/releases/latest/download/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/hars-21/reqsh/main/install.sh | sh
 ```
 
 ### Pre-built binary
