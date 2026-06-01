@@ -19,7 +19,8 @@ pub fn parse(input: String) -> Result<Parsed, String> {
             Ok(Parsed::Request(result))
         }
 
-        "base" | "set" | "unset" | "header" | "headers" | "vars" | "help" | "history" | "rerun" => {
+        "base" | "set" | "unset" | "header" | "headers" | "vars" | "save" | "run" | "help"
+        | "history" | "rerun" => {
             let result = parse_builtin(input)?;
             Ok(Parsed::Builtin(result))
         }
@@ -140,6 +141,20 @@ fn parse_builtin(line: String) -> Result<Builtin, String> {
                 Err("usage: vars".to_string())
             } else {
                 Ok(Builtin::Vars)
+            }
+        }
+        "save" => {
+            if tokens.len() != 2 {
+                Err("usage: save <name>".to_string())
+            } else {
+                Ok(Builtin::Save(tokens[1].to_string()))
+            }
+        }
+        "run" => {
+            if tokens.len() != 2 {
+                Err("usage: run <name>".to_string())
+            } else {
+                Ok(Builtin::Run(tokens[1].to_string()))
             }
         }
         "help" => Ok(Builtin::Help),

@@ -41,6 +41,8 @@ pub fn help_text() -> String {
     set <name> <value>
     unset <name>
     unset header <key>
+    save <name>
+    run <name>
     vars
     headers
     history

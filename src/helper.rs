@@ -6,7 +6,7 @@ use rustyline::{Context, Helper, Result};
 
 const BUILTINS: &[&str] = &[
     "GET", "POST", "PUT", "DELETE", "base", "header", "exit", "help", "history", "rerun", "set",
-    "unset", "vars", "headers",
+    "unset", "save", "run", "vars", "headers",
 ];
 
 pub struct ShellHelper;

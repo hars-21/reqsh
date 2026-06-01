@@ -14,6 +14,8 @@ pub enum Builtin {
     History,
     Rerun(usize),
     Set(String, String),
+    Save(String),
+    Run(String),
     UnsetVariable(String),
     UnsetHeader(String),
     Headers,
@@ -53,6 +55,19 @@ pub fn handle(
             for var in ctx.get_variables().iter() {
                 println!("{} = {}", var.0, var.1)
             }
+        }
+
+        Builtin::Save(name) => {
+            ctx.save_request(name)?;
+        }
+
+        Builtin::Run(name) => {
+            let req = ctx
+                .get_request(&name)
+                .ok_or_else(|| format!("no saved request: {name}"))?
+                .clone();
+            let response = execute(req, ctx).map_err(|e| e.to_string())?;
+            println!("{response}");
         }
 
         Builtin::UnsetVariable(name) => {

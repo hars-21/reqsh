@@ -1,9 +1,13 @@
 use std::collections::HashMap;
 
+use crate::request::Request;
+
 pub struct ShellState {
     base_url: Option<String>,
     headers: HashMap<String, String>,
     variables: HashMap<String, String>,
+    last_request: Option<Request>,
+    saved_requests: HashMap<String, Request>,
 }
 
 impl Default for ShellState {
@@ -18,7 +22,27 @@ impl ShellState {
             base_url: None,
             headers: HashMap::new(),
             variables: HashMap::new(),
+            last_request: None,
+            saved_requests: HashMap::new(),
         }
+    }
+
+    pub fn set_last_request(&mut self, req: Request) {
+        self.last_request = Some(req);
+    }
+
+    pub fn save_request(&mut self, name: String) -> Result<(), String> {
+        let req = self
+            .last_request
+            .as_ref()
+            .ok_or_else(|| "no request to save - execute a request first".to_string())?
+            .clone();
+        self.saved_requests.insert(name, req);
+        Ok(())
+    }
+
+    pub fn get_request(&self, name: &str) -> Option<&Request> {
+        self.saved_requests.get(name)
     }
 
     pub fn get_base_url(&self) -> Option<&str> {

@@ -63,15 +63,17 @@ fn shell_loop() {
                             }
                         },
 
-                        Parsed::Request(req) => match execute(req, &ctx) {
-                            Ok(res) => {
-                                println!("{}", res);
+                        Parsed::Request(req) => {
+                            ctx.set_last_request(req.clone());
+                            match execute(req, &ctx) {
+                                Ok(res) => {
+                                    println!("{}", res);
+                                }
+                                Err(e) => {
+                                    println!("{}", e.red().bold());
+                                }
                             }
-
-                            Err(e) => {
-                                println!("{}", e.red().bold());
-                            }
-                        },
+                        }
 
                         Parsed::Exit => {
                             println!("{}", "Bye!".dimmed());
