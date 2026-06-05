@@ -86,4 +86,11 @@ mod tests {
             Some(&"application/json".to_string())
         );
     }
+
+    #[test]
+    fn set_param_adds_param() {
+        let mut req = Request::new(Method::GET, "/users".to_string());
+        req.set_param("page".to_string(), "1".to_string());
+        assert_eq!(req.params.get("page"), Some(&"1".to_string()));
+    }
 }

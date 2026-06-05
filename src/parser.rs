@@ -224,4 +224,48 @@ mod tests {
 
         assert!(result.is_err());
     }
+
+    #[test]
+    fn parse_save_command() {
+        let result = parse("save my-req".to_string());
+        assert!(result.is_ok());
+        assert!(matches!(result.unwrap(), Parsed::Builtin(Builtin::Save(_))));
+    }
+
+    #[test]
+    fn parse_run_command() {
+        let result = parse("run my-req".to_string());
+        assert!(result.is_ok());
+        assert!(matches!(result.unwrap(), Parsed::Builtin(Builtin::Run(_))));
+    }
+
+    #[test]
+    fn parse_requests_command() {
+        let result = parse("requests".to_string());
+        assert!(result.is_ok());
+        assert!(matches!(
+            result.unwrap(),
+            Parsed::Builtin(Builtin::Requests)
+        ));
+    }
+
+    #[test]
+    fn parse_unset_variable() {
+        let result = parse("unset foo".to_string());
+        assert!(result.is_ok());
+        assert!(matches!(
+            result.unwrap(),
+            Parsed::Builtin(Builtin::UnsetVariable(_))
+        ));
+    }
+
+    #[test]
+    fn parse_unset_header() {
+        let result = parse("unset header foo".to_string());
+        assert!(result.is_ok());
+        assert!(matches!(
+            result.unwrap(),
+            Parsed::Builtin(Builtin::UnsetHeader(_))
+        ));
+    }
 }

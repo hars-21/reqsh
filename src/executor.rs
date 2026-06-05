@@ -83,4 +83,37 @@ mod tests {
 
         assert!(result.is_err());
     }
+
+    #[test]
+    fn interpolate_passthrough() {
+        let vars = HashMap::new();
+        assert_eq!(interpolate("hello", &vars).unwrap(), "hello");
+    }
+
+    #[test]
+    fn interpolate_replaces_variable() {
+        let mut vars = HashMap::new();
+        vars.insert("name".to_string(), "world".to_string());
+        assert_eq!(interpolate("hello {{name}}", &vars).unwrap(), "hello world");
+    }
+
+    #[test]
+    fn interpolate_undefined_errors() {
+        let vars = HashMap::new();
+        assert!(interpolate("{{missing}}", &vars).is_err());
+    }
+
+    #[test]
+    fn interpolate_unclosed_errors() {
+        let vars = HashMap::new();
+        assert!(interpolate("{{unclosed", &vars).is_err());
+    }
+
+    #[test]
+    fn interpolate_multiple_vars() {
+        let mut vars = HashMap::new();
+        vars.insert("a".to_string(), "1".to_string());
+        vars.insert("b".to_string(), "2".to_string());
+        assert_eq!(interpolate("{{a}}-{{b}}", &vars).unwrap(), "1-2");
+    }
 }

@@ -130,4 +130,38 @@ mod test {
             Some(&"random-auth-token".to_string())
         );
     }
+
+    #[test]
+    fn remove_variable_removes_it() {
+        let mut state = ShellState::new();
+        state.set_variable("key".to_string(), "val".to_string());
+        state.remove_variable("key");
+        assert!(state.get_variable("key").is_none());
+    }
+
+    #[test]
+    fn remove_header_removes_it() {
+        let mut state = ShellState::new();
+        state.set_header("X-Foo".to_string(), "bar".to_string());
+        state.remove_header("X-Foo");
+        assert!(state.get_headers().get("X-Foo").is_none());
+    }
+
+    #[test]
+    fn save_request_needs_last_request() {
+        let mut state = ShellState::new();
+        assert!(state.save_request("name".to_string()).is_err());
+    }
+
+    #[test]
+    fn save_and_get_request() {
+        use crate::request::Method;
+        let mut state = ShellState::new();
+        let req = crate::request::Request::new(Method::GET, "/test".to_string());
+        state.set_last_request(req);
+        state.save_request("myreq".to_string()).unwrap();
+        let saved = state.get_request("myreq");
+        assert!(saved.is_some());
+        assert_eq!(saved.unwrap().path, "/test");
+    }
 }
