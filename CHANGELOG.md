@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.2 (2026-06-06)
+
+- Variable interpolation with `{{name}}` syntax in paths, headers, and body
+- Query parameter support with `param: key=value` in request definitions
+- `save <name>` - save a request to session memory
+- `run <name>` - execute a saved request
+- `requests` - list all saved requests
+- `unset <name>` / `unset header <key>` - remove variables and headers
+- Added `set`, `unset`, `save`, `run`, `vars`, `headers`, `requests` to tab completion
+
 ## 0.1.1 (2026-05-26)
 
 - Added `--version`, `-v` flags to display version
