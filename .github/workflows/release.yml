@@ -18,12 +18,12 @@ jobs:
       matrix:
         include:
           - name: macos-intel
-            os: macos-13
+            os: macos-15
             target: x86_64-apple-darwin
             archive: tar.gz
 
           - name: macos-silicon
-            os: macos-14
+            os: macos-15
             target: aarch64-apple-darwin
             archive: tar.gz
 
