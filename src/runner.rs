@@ -15,10 +15,12 @@ pub fn fetch(
     let client = Client::new();
 
     // Url Constructor
-    let full_url = if (request.path.starts_with("/"))
-        && let Some(base_url) = base_url
+    let full_url = if request.path.starts_with("http://") || request.path.starts_with("https://")
     {
-        format!("{base_url}{}", request.path)
+        request.path.clone()
+    } else if request.path.starts_with("/") && let Some(base_url) = base_url {
+        let base = base_url.trim_end_matches('/');
+        format!("{base}{}", request.path)
     } else {
         return Err(String::from(
             "Base URL not found. Use base <url> to add base url",
@@ -52,7 +54,9 @@ pub fn fetch(
             HeaderValue::from_bytes(value.as_bytes()).unwrap(),
         );
     }
-    headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
+    if !headers.contains_key(CONTENT_TYPE) {
+        headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
+    }
     req_builder = req_builder.headers(headers);
 
     // Query Params
