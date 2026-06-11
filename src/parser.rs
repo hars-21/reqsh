@@ -13,8 +13,13 @@ pub fn parse(input: String) -> Result<Parsed, String> {
     let first_line = input.lines().next().unwrap();
     let tokens: Vec<&str> = first_line.split_whitespace().collect();
 
-    match tokens[0] {
-        "GET" | "POST" | "PUT" | "DELETE" => {
+    if tokens.is_empty() {
+        return Err("No command provided".to_string());
+    }
+
+    let token_match = tokens[0].to_lowercase();
+    match token_match.as_str() {
+        "get" | "post" | "put" | "delete" => {
             let result = parse_request(input)?;
             Ok(Parsed::Request(result))
         }
@@ -27,7 +32,7 @@ pub fn parse(input: String) -> Result<Parsed, String> {
 
         "exit" => Ok(Parsed::Exit),
 
-        _ => Err(format!("Reference Error: {} not defined", { tokens[0] })),
+        _ => Err(format!("Reference Error: {} not defined", tokens[0])),
     }
 }
 

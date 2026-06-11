@@ -4,37 +4,26 @@ pub fn help_text() -> String {
     format!(
         "
 {}
-
 {}
-
   {}:
     reqsh
-
   {}:
     {}  Show help
     {}  Show version
-
 {}
-
   {}:
     {} <path>
     [Headers]
-
     [Body]
     ::send
-
   {}:
     GET, POST, PUT, DELETE
-
   {}:
     <key>: <value>
     param: <key>=<value>
-
   {}:
     raw, json
-
 {}
-
   {}:
     base <url>
     header <key> <value>
@@ -50,7 +39,6 @@ pub fn help_text() -> String {
     rerun <id>
     help
     exit
-
 {}
 ",
         "reqsh help".bold().cyan(),

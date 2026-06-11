@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 use reqsh::builtin::{ControlFlow, handle};
 use reqsh::help::help_text;
+use reqsh::logerror;
 use reqsh::parser::{Parsed, parse};
 use rustyline::error::ReadlineError;
 use rustyline::history::FileHistory;
@@ -59,7 +60,7 @@ fn shell_loop() {
                                 break;
                             }
                             Err(e) => {
-                                println!("{}", e.red().bold());
+                                logerror!("{}", e.red().bold());
                             }
                         },
 
@@ -70,7 +71,7 @@ fn shell_loop() {
                                     println!("{}", res);
                                 }
                                 Err(e) => {
-                                    println!("{}", e.red().bold());
+                                    logerror!("{}", e.red().bold());
                                 }
                             }
                         }
@@ -82,7 +83,7 @@ fn shell_loop() {
                     },
 
                     Err(e) => {
-                        println!("{}", e.red().bold());
+                        logerror!("{}", e.red().bold());
                     }
                 }
             }
@@ -96,7 +97,7 @@ fn shell_loop() {
             }
 
             Err(err) => {
-                println!("Error: {:?}", err);
+                logerror!("Error: {:?}", err);
                 break;
             }
         }
@@ -132,7 +133,7 @@ fn collect_input(rl: &mut Editor<ShellHelper, FileHistory>, first_line: String) 
             }
 
             Err(err) => {
-                println!("Error: {:?}", err);
+                logerror!("Error: {:?}", err);
                 buffer.clear();
                 continue;
             }
@@ -159,14 +160,14 @@ fn main() {
         }
 
         [unknown] => {
-            eprintln!("Unknown argument: {}", unknown);
-            eprintln!("Try 'reqsh --help'");
+            logerror!("Unknown argument: {}", unknown);
+            logerror!("Try 'reqsh --help'");
             std::process::exit(1);
         }
 
         _ => {
-            eprintln!("Too many arguments");
-            eprintln!("Try 'reqsh --help'");
+            logerror!("Too many arguments");
+            logerror!("Try 'reqsh --help'");
             std::process::exit(1);
         }
     }
