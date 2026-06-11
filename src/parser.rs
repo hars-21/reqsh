@@ -120,13 +120,14 @@ fn parse_builtin(line: String) -> Result<Builtin, String> {
             }
         }
         "header" => {
-            if tokens.len() != 3 {
+            if tokens.len() < 3 {
                 Err("usage: header <key> <value>".to_string())
             } else {
-                Ok(Builtin::Header(
-                    tokens[1].to_string(),
-                    tokens[2].to_string(),
-                ))
+                let key = tokens[1].to_string();
+                // Join all remaining tokens as the value to support multi-word values
+                // e.g., "header Authorization Bearer myApiToken123" -> key="Authorization", value="Bearer myApiToken123"
+                let value = tokens[2..].join(" ");
+                Ok(Builtin::Header(key, value))
             }
         }
         "headers" => {
@@ -267,5 +268,34 @@ mod tests {
             result.unwrap(),
             Parsed::Builtin(Builtin::UnsetHeader(_))
         ));
+    }
+
+    #[test]
+    fn parse_header_single_word_value() {
+        let result = parse("header Content-Type application/json".to_string());
+        assert!(result.is_ok());
+        assert!(matches!(
+            result.unwrap(),
+            Parsed::Builtin(Builtin::Header(key, value))
+                if key == "Content-Type" && value == "application/json"
+        ));
+    }
+
+    #[test]
+    fn parse_header_multi_word_value() {
+        let result = parse("header Authorization Bearer myApiToken123".to_string());
+        assert!(result.is_ok());
+        assert!(matches!(
+            result.unwrap(),
+            Parsed::Builtin(Builtin::Header(key, value))
+                if key == "Authorization" && value == "Bearer myApiToken123"
+        ));
+    }
+
+    #[test]
+    fn parse_header_requires_at_least_3_tokens() {
+        // header with less than 3 tokens should fail
+        let result = parse("header key".to_string());
+        assert!(result.is_err());
     }
 }
