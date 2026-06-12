@@ -3,7 +3,6 @@ pub mod display;
 pub mod executor;
 pub mod help;
 pub mod helper;
-pub mod logger;
 pub mod parser;
 pub mod request;
 pub mod runner;
