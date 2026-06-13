@@ -45,21 +45,23 @@ pub fn fetch(
     //Global Headers
     let mut headers = HeaderMap::new();
     for (key, value) in global_headers {
-        headers.insert(
-            HeaderName::from_bytes(key.to_ascii_lowercase().as_bytes()).unwrap(),
-            HeaderValue::from_bytes(value.as_bytes()).unwrap(),
-        );
+        let name = HeaderName::from_bytes(key.to_ascii_lowercase().as_bytes())
+            .map_err(|_| format!("Invalid header name: {key}"))?;
+        let val = HeaderValue::from_bytes(value.as_bytes())
+            .map_err(|_| format!("Invalid header value for '{key}': {value}"))?;
+        headers.insert(name, val);
     }
 
     // Request Headers
     for (key, value) in &request.headers {
-        headers.insert(
-            HeaderName::from_bytes(key.to_ascii_lowercase().as_bytes()).unwrap(),
-            HeaderValue::from_bytes(value.as_bytes()).unwrap(),
-        );
+        let name = HeaderName::from_bytes(key.to_ascii_lowercase().as_bytes())
+            .map_err(|_| format!("Invalid header name: {key}"))?;
+        let val = HeaderValue::from_bytes(value.as_bytes())
+            .map_err(|_| format!("Invalid header value for '{key}': {value}"))?;
+        headers.insert(name, val);
     }
     if !headers.contains_key(CONTENT_TYPE) {
-        headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
+        headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
     }
     req_builder = req_builder.headers(headers);
 

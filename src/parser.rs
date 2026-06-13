@@ -32,7 +32,7 @@ pub fn parse(input: String) -> Result<Parsed, String> {
 
         "exit" => Ok(Parsed::Exit),
 
-        _ => Err(format!("Reference Error: {} not defined", tokens[0])),
+        _ => Err(format!("Unknown command: {} not defined", tokens[0])),
     }
 }
 
