@@ -17,7 +17,7 @@ pub fn help_text() -> String {
     [Body]
     ::send
   {}:
-    GET, POST, PUT, DELETE
+    GET, POST, PUT, PATCH, DELETE
   {}:
     <key>: <value>
     param: <key>=<value>

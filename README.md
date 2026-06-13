@@ -2,17 +2,18 @@
   <img src="assets/banner.svg" alt="reqsh">
 </p>
 
-[![Last Update](https://img.shields.io/github/last-commit/hars-21/reqsh?label=last%20update)](https://github.com/hars-21/reqsh)
-[![Rust](https://img.shields.io/badge/rust-v1.93.0-orange)]()
-[![License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)](#)
+[![Rust](https://img.shields.io/badge/rust-v1.93.0-orange)](https://www.rust-lang.org)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-under%20development-yellow)]()
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
 Interactive HTTP shell for API workflows. Send HTTP requests, manage headers and base URLs, and rerun past commands from a terminal REPL.
 
 ## Features
 
 - Interactive REPL with tab completion
-- Send GET, POST, PUT, DELETE requests
+- Send GET, POST, PUT, PATCH, DELETE requests (case-insensitive)
 - Multi-line request input for custom headers and body
 - Persistent session state (base URL, global headers, variables)
 - Variable interpolation with `{{name}}` syntax in paths, headers, and body
@@ -97,6 +98,7 @@ reqsh> POST /users
 | `GET <url>`            | Send GET request                     |
 | `POST <url>`           | Send POST request                    |
 | `PUT <url>`            | Send PUT request                     |
+| `PATCH <url>`          | Send PATCH request                   |
 | `DELETE <url>`         | Send DELETE request                  |
 | `base <url>`           | Set base URL for all requests        |
 | `header <key> <value>` | Set a global header for all requests |

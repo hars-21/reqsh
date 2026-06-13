@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.4 (2026-06-13)
+
+- `PATCH` method support added
+- HTTP methods are now case-insensitive (`GET`, `get`, `Get` all work)
+- Errors are printed to stderr when output is piped, stdout in interactive mode
+- Help text is more compact (fewer blank lines)
+- Invalid header names/values now show clear error messages instead of panicking
+- Empty input guard added to prevent crash on blank lines in multi-line mode
+
 ## 0.1.3 (2026-06-09)
 
 - Response time displayed with each request
