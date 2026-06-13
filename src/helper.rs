@@ -5,8 +5,8 @@ use rustyline::validate::Validator;
 use rustyline::{Context, Helper, Result};
 
 const BUILTINS: &[&str] = &[
-    "GET", "POST", "PUT", "DELETE", "base", "header", "exit", "help", "history", "rerun", "set",
-    "unset", "save", "run", "vars", "headers", "requests",
+    "GET", "POST", "PUT", "PATCH", "DELETE", "base", "header", "exit", "help", "history", "rerun",
+    "set", "unset", "save", "run", "vars", "headers", "requests",
 ];
 
 pub struct ShellHelper;

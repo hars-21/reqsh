@@ -19,7 +19,7 @@ pub fn parse(input: String) -> Result<Parsed, String> {
 
     let token_match = tokens[0].to_lowercase();
     match token_match.as_str() {
-        "get" | "post" | "put" | "delete" => {
+        "get" | "post" | "put" | "patch" | "delete" => {
             let result = parse_request(input)?;
             Ok(Parsed::Request(result))
         }

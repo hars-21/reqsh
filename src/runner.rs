@@ -39,6 +39,7 @@ pub fn fetch(
         Method::GET => client.get(full_url),
         Method::POST => client.post(full_url),
         Method::PUT => client.put(full_url),
+        Method::PATCH => client.patch(full_url),
         Method::DELETE => client.delete(full_url),
     };
 
