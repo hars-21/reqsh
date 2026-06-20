@@ -41,6 +41,8 @@ pub fn fetch(
         Method::PUT => client.put(full_url),
         Method::PATCH => client.patch(full_url),
         Method::DELETE => client.delete(full_url),
+        Method::HEAD => client.head(full_url),
+        Method::OPTIONS => client.request(reqwest::Method::OPTIONS, full_url),
     };
 
     //Global Headers

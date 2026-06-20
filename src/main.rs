@@ -42,7 +42,7 @@ fn shell_loop() {
                 }
 
                 let tokens: Vec<&str> = line.split_whitespace().collect();
-                let methods = ["GET", "POST", "PUT", "PATCH", "DELETE"];
+                let methods = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
                 let raw = if methods.contains(&tokens[0]) {
                     collect_input(&mut rl, line)
                 } else {
