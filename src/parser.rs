@@ -19,7 +19,7 @@ pub fn parse(input: String) -> Result<Parsed, String> {
 
     let token_match = tokens[0].to_lowercase();
     match token_match.as_str() {
-        "get" | "post" | "put" | "patch" | "delete" => {
+        "get" | "post" | "put" | "patch" | "delete" | "head" | "options" => {
             let result = parse_request(input)?;
             Ok(Parsed::Request(result))
         }
@@ -53,7 +53,10 @@ fn parse_request(buffer: String) -> Result<Request, String> {
         "get" => Method::GET,
         "post" => Method::POST,
         "put" => Method::PUT,
+        "patch" => Method::PATCH,
         "delete" => Method::DELETE,
+        "head" => Method::HEAD,
+        "options" => Method::OPTIONS,
         _ => return Err("Invalid Method".to_string()),
     };
 

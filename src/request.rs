@@ -40,6 +40,8 @@ pub enum Method {
     PUT,
     PATCH,
     DELETE,
+    HEAD,
+    OPTIONS,
 }
 
 impl Method {
@@ -50,6 +52,8 @@ impl Method {
             Method::PUT => "PUT",
             Method::PATCH => "PATCH",
             Method::DELETE => "DELETE",
+            Method::HEAD => "HEAD",
+            Method::OPTIONS => "OPTIONS",
         }
     }
 }
