@@ -50,6 +50,7 @@ fn shell_loop() {
                 };
 
                 rl.add_history_entry(&raw).unwrap_or_default();
+                rl.save_history(&hist_path).unwrap_or_default();
 
                 match parse(raw) {
                     Ok(parsed) => match parsed {
@@ -88,10 +89,12 @@ fn shell_loop() {
             }
 
             Err(ReadlineError::Interrupted) => {
-                break;
+                println!("^C");
+                continue;
             }
 
             Err(ReadlineError::Eof) => {
+                println!();
                 break;
             }
 
