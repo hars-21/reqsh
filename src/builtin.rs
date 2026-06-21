@@ -21,6 +21,7 @@ pub enum Builtin {
     Headers,
     Vars,
     Requests,
+    Clear,
 }
 
 pub enum ControlFlow {
@@ -94,6 +95,11 @@ pub fn handle(
             for (id, line) in history.iter().enumerate() {
                 println!("{:>4}: {}", id + 1, line.trim());
             }
+        }
+
+        Builtin::Clear => {
+            ctx.clear();
+            println!("Session state cleared");
         }
 
         Builtin::Rerun(index) => {
