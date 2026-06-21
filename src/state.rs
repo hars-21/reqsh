@@ -84,6 +84,14 @@ impl ShellState {
     pub fn remove_variable(&mut self, name: &str) {
         self.variables.remove(name);
     }
+
+    pub fn clear(&mut self) {
+        self.base_url = None;
+        self.headers.clear();
+        self.variables.clear();
+        self.last_request = None;
+        self.saved_requests.clear();
+    }
 }
 
 #[cfg(test)]

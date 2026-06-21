@@ -37,6 +37,7 @@ pub fn help_text() -> String {
     headers
     history
     rerun <id>
+    clear
     help
     exit
 {}

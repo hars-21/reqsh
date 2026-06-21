@@ -25,7 +25,7 @@ pub fn parse(input: String) -> Result<Parsed, String> {
         }
 
         "base" | "set" | "unset" | "header" | "headers" | "vars" | "requests" | "save" | "run"
-        | "help" | "history" | "rerun" => {
+        | "help" | "history" | "rerun" | "clear" => {
             let result = parse_builtin(input)?;
             Ok(Parsed::Builtin(result))
         }
@@ -174,6 +174,7 @@ fn parse_builtin(line: String) -> Result<Builtin, String> {
             }
         }
         "help" => Ok(Builtin::Help),
+        "clear" => Ok(Builtin::Clear),
         "history" => Ok(Builtin::History),
         "rerun" => {
             if tokens.len() != 2 {
