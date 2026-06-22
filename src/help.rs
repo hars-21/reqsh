@@ -10,6 +10,7 @@ pub fn help_text() -> String {
   {}:
     {}  Show help
     {}  Show version
+    {}  Set request timeout
 {}
   {}:
     {} <path>
@@ -37,6 +38,7 @@ pub fn help_text() -> String {
     headers
     history
     rerun <id>
+    timeout <seconds>
     clear
     help
     exit
@@ -48,6 +50,7 @@ pub fn help_text() -> String {
         "Options".yellow().bold(),
         "--help, -h".green().bold(),
         "--version, -v".green().bold(),
+        "--timeout <seconds>".green().bold(),
         "─".repeat(50).dimmed(),
         "Requests".yellow().bold(),
         "Method".green().bold(),

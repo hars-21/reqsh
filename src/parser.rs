@@ -25,7 +25,7 @@ pub fn parse(input: String) -> Result<Parsed, String> {
         }
 
         "base" | "set" | "unset" | "header" | "headers" | "vars" | "requests" | "save" | "run"
-        | "help" | "history" | "rerun" | "clear" => {
+        | "help" | "history" | "rerun" | "clear" | "timeout" => {
             let result = parse_builtin(input)?;
             Ok(Parsed::Builtin(result))
         }
@@ -175,6 +175,16 @@ fn parse_builtin(line: String) -> Result<Builtin, String> {
         }
         "help" => Ok(Builtin::Help),
         "clear" => Ok(Builtin::Clear),
+        "timeout" => {
+            if tokens.len() != 2 {
+                Err("usage: timeout <seconds>".to_string())
+            } else {
+                let secs = tokens[1]
+                    .parse::<u64>()
+                    .map_err(|e| format!("invalid timeout: {e}"))?;
+                Ok(Builtin::Timeout(secs))
+            }
+        }
         "history" => Ok(Builtin::History),
         "rerun" => {
             if tokens.len() != 2 {

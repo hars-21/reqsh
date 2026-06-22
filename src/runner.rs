@@ -13,9 +13,19 @@ pub fn fetch(
     request: &Request,
     base_url: Option<&str>,
     global_headers: &HashMap<String, String>,
+    timeout_secs: Option<u64>,
 ) -> Result<(Response, Duration), String> {
     // Client
-    let client = Client::new();
+    let client = match timeout_secs {
+        Some(secs) => Client::builder()
+            .timeout(Duration::from_secs(secs))
+            .build()
+            .map_err(|e| format!("failed to build client: {e}"))?,
+        None => Client::builder()
+            .timeout(Duration::from_secs(30))
+            .build()
+            .map_err(|e| format!("failed to build client: {e}"))?,
+    };
 
     // Url Constructor
     let full_url = if request.path.starts_with("http://") || request.path.starts_with("https://") {

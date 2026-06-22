@@ -20,7 +20,7 @@ fn history_path() -> PathBuf {
     home.join(".reqsh_history")
 }
 
-fn shell_loop() {
+fn run_repl(ctx: &mut ShellState) {
     let config = Config::builder()
         .history_ignore_space(true)
         .completion_type(CompletionType::List)
@@ -28,7 +28,6 @@ fn shell_loop() {
         .build();
 
     let hist_path = history_path();
-    let mut ctx = ShellState::new();
     let mut rl = Editor::with_config(config).unwrap();
     rl.set_helper(Some(ShellHelper));
     rl.load_history(&hist_path).unwrap_or_default();
@@ -54,7 +53,7 @@ fn shell_loop() {
 
                 match parse(raw) {
                     Ok(parsed) => match parsed {
-                        Parsed::Builtin(cmd) => match handle(cmd, &mut ctx, rl.history()) {
+                        Parsed::Builtin(cmd) => match handle(cmd, ctx, rl.history()) {
                             Ok(ControlFlow::Continue) => {}
                             Ok(ControlFlow::Exit) => {
                                 break;
@@ -66,7 +65,7 @@ fn shell_loop() {
 
                         Parsed::Request(req) => {
                             ctx.set_last_request(req.clone());
-                            match execute(req, &ctx) {
+                            match execute(req, ctx) {
                                 Ok(res) => {
                                     println!("{}", res);
                                 }
@@ -150,7 +149,8 @@ fn main() {
 
     match args.as_slice() {
         [] => {
-            shell_loop();
+            let mut ctx = ShellState::new();
+            run_repl(&mut ctx);
         }
 
         [arg] if arg == "--help" || arg == "-h" => {
@@ -159,6 +159,16 @@ fn main() {
 
         [arg] if arg == "--version" || arg == "-v" => {
             println!("reqsh {}", VERSION);
+        }
+
+        [arg, value] if arg == "--timeout" => {
+            let secs: u64 = value.parse().unwrap_or_else(|_| {
+                eprintln!("Invalid timeout: {value}");
+                std::process::exit(1);
+            });
+            let mut ctx = ShellState::new();
+            ctx.set_timeout(secs);
+            run_repl(&mut ctx);
         }
 
         [unknown] => {

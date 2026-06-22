@@ -22,6 +22,7 @@ pub enum Builtin {
     Vars,
     Requests,
     Clear,
+    Timeout(u64),
 }
 
 pub enum ControlFlow {
@@ -95,6 +96,11 @@ pub fn handle(
             for (id, line) in history.iter().enumerate() {
                 println!("{:>4}: {}", id + 1, line.trim());
             }
+        }
+
+        Builtin::Timeout(secs) => {
+            ctx.set_timeout(secs);
+            println!("Request timeout set to {secs}s");
         }
 
         Builtin::Clear => {
