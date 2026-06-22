@@ -63,9 +63,6 @@ pub fn fetch(
             .map_err(|_| format!("Invalid header value for '{key}': {value}"))?;
         headers.insert(name, val);
     }
-    if !headers.contains_key(CONTENT_TYPE) {
-        headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
-    }
     req_builder = req_builder.headers(headers);
 
     // Query Params
@@ -75,6 +72,18 @@ pub fn fetch(
 
     // Body
     if let Some(body) = &request.body {
+        let trimmed = body.trim();
+        if (trimmed.starts_with('{') || trimmed.starts_with('['))
+            && !global_headers
+                .keys()
+                .any(|k| k.eq_ignore_ascii_case("content-type"))
+            && !request
+                .headers
+                .keys()
+                .any(|k| k.eq_ignore_ascii_case("content-type"))
+        {
+            req_builder = req_builder.header(CONTENT_TYPE, "application/json");
+        }
         req_builder = req_builder.body(body.clone());
     }
 
