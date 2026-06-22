@@ -8,6 +8,7 @@ pub struct ShellState {
     variables: HashMap<String, String>,
     last_request: Option<Request>,
     saved_requests: HashMap<String, Request>,
+    timeout_secs: Option<u64>,
 }
 
 impl Default for ShellState {
@@ -24,6 +25,7 @@ impl ShellState {
             variables: HashMap::new(),
             last_request: None,
             saved_requests: HashMap::new(),
+            timeout_secs: None,
         }
     }
 
@@ -85,12 +87,21 @@ impl ShellState {
         self.variables.remove(name);
     }
 
+    pub fn get_timeout(&self) -> Option<u64> {
+        self.timeout_secs
+    }
+
+    pub fn set_timeout(&mut self, secs: u64) {
+        self.timeout_secs = Some(secs);
+    }
+
     pub fn clear(&mut self) {
         self.base_url = None;
         self.headers.clear();
         self.variables.clear();
         self.last_request = None;
         self.saved_requests.clear();
+        self.timeout_secs = None;
     }
 }
 

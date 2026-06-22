@@ -53,7 +53,8 @@ pub fn execute(req: Request, ctx: &ShellState) -> Result<String, String> {
 
     let base_url = ctx.get_base_url();
     let global_headers = ctx.get_headers();
-    let response = fetch(&req, base_url, global_headers);
+    let timeout_secs = ctx.get_timeout();
+    let response = fetch(&req, base_url, global_headers, timeout_secs);
 
     match response {
         Ok((res, duration)) => Ok(display_response(res, duration)),
