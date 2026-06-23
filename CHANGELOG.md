@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.5 (2026-06-23)
+
+- `HEAD` and `OPTIONS` HTTP methods added
+- Smart tab completion for commands, methods, headers, URLs and saved request names
+- `--timeout <seconds>` CLI flag and `timeout <seconds>` builtin to set request timeout
+- New `clear` builtin to reset the entire session state
+- `Content-Type` header is now only auto-set when the body looks like JSON
+- Command history is now saved after every command (no more lost history on Ctrl-C/EOF)
+- `Ctrl-C` no longer exits the shell, it interrupts the current line instead
+
 ## 0.1.4 (2026-06-13)
 
 - `PATCH` method support added
