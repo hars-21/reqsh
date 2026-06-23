@@ -1,5 +1,7 @@
+use std::cell::RefCell;
 use std::env;
 use std::path::PathBuf;
+use std::rc::Rc;
 
 use reqsh::builtin::{ControlFlow, handle};
 use reqsh::help::help_text;
@@ -20,7 +22,7 @@ fn history_path() -> PathBuf {
     home.join(".reqsh_history")
 }
 
-fn run_repl(ctx: &mut ShellState) {
+fn run_repl(ctx: Rc<RefCell<ShellState>>) {
     let config = Config::builder()
         .history_ignore_space(true)
         .completion_type(CompletionType::List)
@@ -29,7 +31,7 @@ fn run_repl(ctx: &mut ShellState) {
 
     let hist_path = history_path();
     let mut rl = Editor::with_config(config).unwrap();
-    rl.set_helper(Some(ShellHelper));
+    rl.set_helper(Some(ShellHelper::new(ctx.clone())));
     rl.load_history(&hist_path).unwrap_or_default();
 
     loop {
@@ -53,19 +55,23 @@ fn run_repl(ctx: &mut ShellState) {
 
                 match parse(raw) {
                     Ok(parsed) => match parsed {
-                        Parsed::Builtin(cmd) => match handle(cmd, ctx, rl.history()) {
-                            Ok(ControlFlow::Continue) => {}
-                            Ok(ControlFlow::Exit) => {
-                                break;
+                        Parsed::Builtin(cmd) => {
+                            let mut state = ctx.borrow_mut();
+                            match handle(cmd, &mut state, rl.history()) {
+                                Ok(ControlFlow::Continue) => {}
+                                Ok(ControlFlow::Exit) => {
+                                    break;
+                                }
+                                Err(e) => {
+                                    eprintln!("{}", e.red().bold());
+                                }
                             }
-                            Err(e) => {
-                                eprintln!("{}", e.red().bold());
-                            }
-                        },
+                        }
 
                         Parsed::Request(req) => {
-                            ctx.set_last_request(req.clone());
-                            match execute(req, ctx) {
+                            ctx.borrow_mut().set_last_request(req.clone());
+                            let state = ctx.borrow();
+                            match execute(req, &state) {
                                 Ok(res) => {
                                     println!("{}", res);
                                 }
@@ -149,8 +155,8 @@ fn main() {
 
     match args.as_slice() {
         [] => {
-            let mut ctx = ShellState::new();
-            run_repl(&mut ctx);
+            let ctx = Rc::new(RefCell::new(ShellState::new()));
+            run_repl(ctx);
         }
 
         [arg] if arg == "--help" || arg == "-h" => {
@@ -166,9 +172,9 @@ fn main() {
                 eprintln!("Invalid timeout: {value}");
                 std::process::exit(1);
             });
-            let mut ctx = ShellState::new();
-            ctx.set_timeout(secs);
-            run_repl(&mut ctx);
+            let ctx = Rc::new(RefCell::new(ShellState::new()));
+            ctx.borrow_mut().set_timeout(secs);
+            run_repl(ctx);
         }
 
         [unknown] => {
