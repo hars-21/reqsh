@@ -100,16 +100,24 @@ fn run_repl(ctx: Rc<RefCell<ShellState>>) {
             }
 
             Err(ReadlineError::Interrupted) => {
+                if let Err(e) = ctx.borrow().save() {
+                    eprintln!("Failed to save state: {}", e);
+                }
                 println!("^C");
                 continue;
             }
 
             Err(ReadlineError::Eof) => {
-                println!();
+                if let Err(e) = ctx.borrow().save() {
+                    eprintln!("Failed to save state: {}", e);
+                }
                 break;
             }
 
             Err(err) => {
+                if let Err(e) = ctx.borrow().save() {
+                    eprintln!("Failed to save state: {}", e);
+                }
                 eprintln!("Error: {:?}", err);
                 break;
             }
