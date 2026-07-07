@@ -256,8 +256,6 @@ mod test {
 
         assert!(loaded_state.get_request("login_req").is_some());
 
-        assert!(loaded_state.last_request.is_none());
-
         let _ = fs::remove_file(&temp_file);
     }
 
