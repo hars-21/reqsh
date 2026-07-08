@@ -1,7 +1,10 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fs, path::PathBuf};
+
+use serde::{Deserialize, Serialize};
 
 use crate::request::Request;
 
+#[derive(Serialize, Deserialize)]
 pub struct ShellState {
     base_url: Option<String>,
     headers: HashMap<String, String>,
@@ -41,6 +44,36 @@ impl ShellState {
             .clone();
         self.saved_requests.insert(name, req);
         Ok(())
+    }
+
+    fn state_file_path() -> PathBuf {
+        let home = dirs::home_dir().expect("could not determine home directory");
+        home.join(".reqsh_state.json")
+    }
+
+    pub fn save(&self) -> Result<(), String> {
+        let path = Self::state_file_path();
+        let json = serde_json::to_string_pretty(self)
+            .map_err(|e| format!("Failed to serialize state: {}", e))?;
+        fs::write(&path, json).map_err(|e| format!("Failed to write state file: {}", e))?;
+        Ok(())
+    }
+
+    pub fn load() -> Self {
+        let path = Self::state_file_path();
+        if path.exists() {
+            let contents = fs::read_to_string(&path).unwrap_or_default();
+            match serde_json::from_str(&contents) {
+                Ok(state) => return state,
+                Err(e) => {
+                    eprintln!(
+                        "Warning: Failed to parse state file: {}. Starting fresh.",
+                        e
+                    );
+                }
+            }
+        }
+        Self::new()
     }
 
     pub fn get_request(&self, name: &str) -> Option<&Request> {
@@ -182,5 +215,58 @@ mod test {
         let saved = state.get_request("myreq");
         assert!(saved.is_some());
         assert_eq!(saved.unwrap().path, "/test");
+    }
+
+    #[test]
+    fn save_and_load_state_roundtrip() {
+        use crate::request::Method;
+        use std::fs;
+
+        let temp_dir = std::env::temp_dir();
+        let temp_file = temp_dir.join("reqsh_test_state.json");
+
+        let _ = fs::remove_file(&temp_file);
+
+        let mut state = ShellState::new();
+        state.set_base_url("https://api.test.com");
+        state.set_header("Auth".to_string(), "Token123".to_string());
+        state.set_variable("user".to_string(), "admin".to_string());
+        state.set_timeout(60);
+
+        let req = crate::request::Request::new(Method::POST, "/login".to_string());
+        state.set_last_request(req);
+        state.save_request("login_req".to_string()).unwrap();
+
+        let json = serde_json::to_string_pretty(&state).unwrap();
+        fs::write(&temp_file, &json).unwrap();
+
+        let loaded_json = fs::read_to_string(&temp_file).unwrap();
+        let loaded_state: ShellState = serde_json::from_str(&loaded_json).unwrap();
+
+        assert_eq!(loaded_state.get_base_url(), Some("https://api.test.com"));
+        assert_eq!(
+            loaded_state.get_headers().get("Auth"),
+            Some(&"Token123".to_string())
+        );
+        assert_eq!(
+            loaded_state.get_variable("user"),
+            Some(&"admin".to_string())
+        );
+        assert_eq!(loaded_state.get_timeout(), Some(60));
+
+        assert!(loaded_state.get_request("login_req").is_some());
+
+        let _ = fs::remove_file(&temp_file);
+    }
+
+    #[test]
+    fn load_missing_file_returns_default_state() {
+        let temp_dir = std::env::temp_dir();
+        let temp_file = temp_dir.join("reqsh_nonexistent_state.json");
+        let _ = std::fs::remove_file(&temp_file);
+        let contents = "";
+        let state: Result<ShellState, _> = serde_json::from_str(contents);
+
+        assert!(state.is_err());
     }
 }
