@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.0 (2026-07-08)
+
+- Session state is now persisted to `~/.reqsh_state.json` across restarts
+- GitHub Sponsors funding file added
+
 ## 0.1.5 (2026-06-23)
 
 - `HEAD` and `OPTIONS` HTTP methods added
