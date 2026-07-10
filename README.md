@@ -13,16 +13,17 @@ Interactive HTTP shell for API workflows. Send HTTP requests, manage headers and
 ## Features
 
 - Interactive REPL with tab completion
-- Send GET, POST, PUT, PATCH, DELETE requests (case-insensitive)
+- Send GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS requests (case-insensitive)
 - Multi-line request input for custom headers and body
-- Persistent session state (base URL, global headers, variables)
-- Variable interpolation with `{{name}}` syntax in paths, headers, and body
+- Persistent session state across restarts (base URL, headers, variables, saved requests)
+- Variable interpolation with `{{name}}` in paths, headers, body, and query params
 - Query parameter support with `param: key=value` lines
 - Save and run requests in-session
-- Response time displayed per request
-- Full absolute URL support (base URL not required)
-- JSON response pretty-printing
+- HTTP version, status code, headers and body in responses
+- JSON response pretty-printing with colored output
 - Command history and rerun by index
+- Tab completion for commands, saved requests, variables and headers
+- Configurable request timeout
 - Colored terminal output
 
 ## Installation
@@ -52,8 +53,10 @@ The binary will be at `target/release/reqsh`.
 CLI Options:
 
 ```bash
-reqsh --help
-reqsh --version
+reqsh               # Start the REPL
+reqsh --help -h     # Show help
+reqsh --version -v  # Show version
+reqsh --timeout 30  # Start REPL with a default request timeout
 ```
 
 Start the REPL:
@@ -100,6 +103,8 @@ reqsh> POST /users
 | `PUT <url>`            | Send PUT request                     |
 | `PATCH <url>`          | Send PATCH request                   |
 | `DELETE <url>`         | Send DELETE request                  |
+| `HEAD <url>`           | Send HEAD request                    |
+| `OPTIONS <url>`        | Send OPTIONS request                 |
 | `base <url>`           | Set base URL for all requests        |
 | `header <key> <value>` | Set a global header for all requests |
 | `set <name> <value>`   | Set a session variable               |
@@ -112,6 +117,8 @@ reqsh> POST /users
 | `headers`              | List global headers                  |
 | `history`              | Show command history                 |
 | `rerun <index>`        | Re-run a command from history        |
+| `timeout <seconds>`    | Set request timeout for the session  |
+| `clear`                | Reset session state entirely         |
 | `help`                 | Show built-in help                   |
 | `exit`                 | Exit the REPL                        |
 
