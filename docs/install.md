@@ -7,7 +7,7 @@ Get reqsh running on your system in seconds. Choose the method that best fits yo
 The fastest and recommended way to install. This script detects your OS and architecture, downloads the latest binary and places it in your PATH.
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/hars-21/reqsh/main/install.sh | sh
+curl -fsSL https://reqsh.dev/install.sh | sh
 ```
 
 ## Prebuilt Binary

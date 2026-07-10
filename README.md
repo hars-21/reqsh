@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="assets/banner.svg" alt="reqsh">
-</p>
+![reqsh | Interactive HTTP shell](assets/banner.png)
 
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)](#)
 [![Rust](https://img.shields.io/badge/rust-v1.93.0-orange)](https://www.rust-lang.org)
@@ -31,12 +29,12 @@ Interactive HTTP shell for API workflows. Send HTTP requests, manage headers and
 ### Install script
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/hars-21/reqsh/main/install.sh | sh
+curl -fsSL https://reqsh.dev/install.sh | sh
 ```
 
 ### Pre-built binary
 
-Download the latest binary for your platform from the [releases page](https://github.com/hars-21/reqsh/releases/latest). macOS (Intel & Silicon), Linux (x86_64), and Windows (x86_64) are available.
+Download the latest binary for your platform from the [releases page](https://github.com/hars-21/reqsh/releases/latest). macOS (Intel & Silicon), Linux (x86_64) and Windows (x86_64) are available.
 
 ### Build from source
 
@@ -65,7 +63,7 @@ Start the REPL:
 reqsh
 ```
 
-Set a base URL (optional — you can use absolute URLs directly):
+Set a base URL (optional - you can use absolute URLs directly):
 
 ```bash
 reqsh> base https://api.example.com
