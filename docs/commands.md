@@ -12,6 +12,7 @@ Beyond standard HTTP methods (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `
 | `unset`        | `unset <name>`         | Remove a variable.                                                             |
 | `unset header` | `unset header <key>`   | Remove a global header.                                                        |
 | `save`         | `save <name>`          | Save the last executed request to memory.                                      |
+| `remove`       | `remove <name>`        | Delete a saved request by name.                                                |
 | `run`          | `run <name>`           | Execute a saved request.                                                       |
 | `vars`         | `vars`                 | List all session variables.                                                    |
 | `headers`      | `headers`              | List all global headers.                                                       |

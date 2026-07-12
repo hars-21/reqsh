@@ -25,7 +25,7 @@ pub fn parse(input: String) -> Result<Parsed, String> {
         }
 
         "base" | "set" | "unset" | "header" | "headers" | "vars" | "requests" | "save" | "run"
-        | "help" | "history" | "rerun" | "clear" | "timeout" => {
+        | "help" | "history" | "rerun" | "clear" | "timeout" | "remove" => {
             let result = parse_builtin(input)?;
             Ok(Parsed::Builtin(result))
         }
@@ -185,6 +185,13 @@ fn parse_builtin(line: String) -> Result<Builtin, String> {
                 Ok(Builtin::Timeout(secs))
             }
         }
+        "remove" => {
+            if tokens.len() != 2 {
+                Err("usage: remove <name>".to_string())
+            } else {
+                Ok(Builtin::Remove(tokens[1].to_string()))
+            }
+        }
         "history" => Ok(Builtin::History),
         "rerun" => {
             if tokens.len() != 2 {
@@ -267,6 +274,19 @@ mod tests {
             result.unwrap(),
             Parsed::Builtin(Builtin::Requests)
         ));
+    }
+
+    #[test]
+    fn parse_remove_builtin() {
+        let result = parse("remove my-req".to_string());
+        assert!(result.is_ok());
+        assert!(matches!(
+            result.unwrap(),
+            Parsed::Builtin(Builtin::Remove(name)) if name == "my-req"
+        ));
+
+        let result = parse("remove".to_string());
+        assert!(result.is_err());
     }
 
     #[test]

@@ -21,6 +21,7 @@ pub enum Builtin {
     Headers,
     Vars,
     Requests,
+    Remove(String),
     Clear,
     Timeout(u64),
 }
@@ -64,6 +65,10 @@ pub fn handle(
             for (name, req) in ctx.get_all_requests() {
                 println!("{} ({}) {}", name, req.method.as_str(), req.path);
             }
+        }
+
+        Builtin::Remove(name) => {
+            ctx.remove_request(&name)?;
         }
 
         Builtin::Save(name) => {
