@@ -33,6 +33,7 @@ pub fn help_text() -> String {
     unset header <key>
     save <name>
     remove <name>
+    rename <old> <new>
     run <name>
     requests
     vars

@@ -22,6 +22,7 @@ pub enum Builtin {
     Vars,
     Requests,
     Remove(String),
+    Rename(String, String),
     Clear,
     Timeout(u64),
 }
@@ -69,6 +70,10 @@ pub fn handle(
 
         Builtin::Remove(name) => {
             ctx.remove_request(&name)?;
+        }
+
+        Builtin::Rename(existing_name, new_name) => {
+            ctx.rename_request(&existing_name, new_name)?;
         }
 
         Builtin::Save(name) => {

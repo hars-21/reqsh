@@ -12,7 +12,7 @@ use crate::state::ShellState;
 const BUILTINS: &[&str] = &[
     "GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS", "base", "header", "exit", "help",
     "history", "rerun", "set", "timeout", "unset", "save", "run", "vars", "headers", "requests",
-    "clear", "remove",
+    "clear", "remove", "rename",
 ];
 
 pub struct ShellHelper {
@@ -56,7 +56,7 @@ impl Completer for ShellHelper {
         let parts: Vec<&str> = before_cursor.split_whitespace().collect();
 
         match parts[0] {
-            "run" | "remove" => {
+            "run" | "remove" | "rename" if parts.len() == 1 => {
                 let state = self.state.borrow();
                 let matches: Vec<Pair> = state
                     .get_all_requests()

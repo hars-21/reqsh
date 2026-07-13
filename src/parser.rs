@@ -25,7 +25,7 @@ pub fn parse(input: String) -> Result<Parsed, String> {
         }
 
         "base" | "set" | "unset" | "header" | "headers" | "vars" | "requests" | "save" | "run"
-        | "help" | "history" | "rerun" | "clear" | "timeout" | "remove" => {
+        | "help" | "history" | "rerun" | "clear" | "timeout" | "remove" | "rename" => {
             let result = parse_builtin(input)?;
             Ok(Parsed::Builtin(result))
         }
@@ -192,6 +192,16 @@ fn parse_builtin(line: String) -> Result<Builtin, String> {
                 Ok(Builtin::Remove(tokens[1].to_string()))
             }
         }
+        "rename" => {
+            if tokens.len() != 3 {
+                Err("usage: rename <old> <new>".to_string())
+            } else {
+                Ok(Builtin::Rename(
+                    tokens[1].to_string(),
+                    tokens[2].to_string(),
+                ))
+            }
+        }
         "history" => Ok(Builtin::History),
         "rerun" => {
             if tokens.len() != 2 {
@@ -335,6 +345,22 @@ mod tests {
     fn parse_header_requires_at_least_3_tokens() {
         // header with less than 3 tokens should fail
         let result = parse("header key".to_string());
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn parse_rename_builtin() {
+        let result = parse("rename old-name new-name".to_string());
+        assert!(result.is_ok());
+        assert!(matches!(
+            result.unwrap(),
+            Parsed::Builtin(Builtin::Rename(old, new)) if old == "old-name" && new == "new-name"
+        ));
+
+        let result = parse("rename".to_string());
+        assert!(result.is_err());
+
+        let result = parse("rename only-one".to_string());
         assert!(result.is_err());
     }
 }
