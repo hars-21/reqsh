@@ -30,11 +30,9 @@ pub fn fetch(
     // Url Constructor
     let full_url = if request.path.starts_with("http://") || request.path.starts_with("https://") {
         request.path.clone()
-    } else if request.path.starts_with("/")
-        && let Some(base_url) = base_url
-    {
+    } else if let Some(base_url) = base_url {
         let base = base_url.trim_end_matches('/');
-        format!("{base}{}", request.path)
+        format!("{base}/{}", request.path.trim_start_matches('/'))
     } else {
         return Err(String::from(
             "Base URL not found. Use base <url> to add base url",
