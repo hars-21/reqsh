@@ -1,0 +1,79 @@
+# git-cliff ~ configuration for reqsh
+# https://git-cliff.org/docs/configuration
+
+[remote.github]
+owner = "hars-21"
+repo = "reqsh"
+
+[changelog]
+header = """
+# Changelog\n
+"""
+body = """
+{%- macro remote_url() -%}
+  https://github.com/{{ remote.github.owner }}/{{ remote.github.repo }}
+{%- endmacro -%}
+
+{% if version %}\
+  {% if previous.version %}\
+## [{{ version }}]({{ self::remote_url() }}/compare/{{ previous.version }}..{{ version }}) - {{ timestamp | date(format="%Y-%m-%d") }}
+  {% else %}\
+## [{{ version }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+  {% endif %}\
+{% else %}\
+## [Unreleased]
+{% endif %}
+
+{% for group_name in ["🚀 Features", "🐛 Bug Fixes", "🔒 Security", "⚡ Performance"] %}\
+{% set group_commits = commits | filter(attribute="group", value=group_name) %}\
+{% if group_commits | length > 0 %}
+### {{ group_name }}
+{% for commit in group_commits %}\
+- {{ commit.message | split(pat="\n") | first | upper_first | trim }}\
+{%- if commit.remote.pr_number %} in \
+[#{{ commit.remote.pr_number }}]({{ self::remote_url() }}/pull/{{ commit.remote.pr_number }}){% endif %}
+{% endfor %}{% endif %}{% endfor %}\
+{% set new_contributors = github.contributors | filter(attribute="is_first_time", value=true) %}\
+{% if new_contributors | length > 0 %}
+### ❤️ New Contributors
+{% for contributor in new_contributors %}
+* @{{ contributor.username }} made their first contribution\
+{% if contributor.pr_number %} in \
+[#{{ contributor.pr_number }}]({{ self::remote_url() }}/pull/{{ contributor.pr_number }})\
+{% endif %}
+{% endfor %}{% endif %}
+"""
+trim = true
+postprocessors = [
+  { pattern = '<REPO>', replace = "https://github.com/hars-21/reqsh" },
+]
+
+[git]
+conventional_commits = true
+filter_unconventional = false
+commit_preprocessors = [
+  { pattern = '\((\w+\s)?#([0-9]+)\)', replace = "([#${2}](<REPO>/issues/${2}))" },
+  { pattern = '^v\d+\.\d+\.\d+:\s*', replace = "" },
+  { pattern = '^bugfix:\s*', replace = "fix: " },
+  { pattern = '^Merge pull request.*', replace = "" },
+]
+commit_parsers = [
+  { message = "^chore\\(release\\):", skip = true },
+  { message = "^ci:", skip = true },
+  { message = "^chore:", skip = true },
+  { message = "^test:", skip = true },
+  { message = "^refactor:", skip = true },
+  { message = "^style:", skip = true },
+  { message = "^docs?:", skip = true },
+  { message = "^revert:", skip = true },
+  { message = "^feat", group = "🚀 Features" },
+  { message = "^fix", group = "🐛 Bug Fixes" },
+  { body = ".*security", group = "🔒 Security" },
+  { message = "^perf", group = "⚡ Performance" },
+]
+protect_breaking_commits = true
+filter_commits = false
+topo_order = true
+sort_commits = "newest"
+tag_pattern = "v[0-9]*"
+skip_tags = "beta|alpha"

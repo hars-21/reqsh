@@ -1,57 +1,88 @@
 # Changelog
 
-## 0.2.0 (2026-07-08)
+## [v0.2.0](https://github.com/hars-21/reqsh/compare/v0.1.5..v0.2.0) - 2026-07-09
 
-- Session state is now persisted to `~/.reqsh_state.json` across restarts
-- GitHub Sponsors funding file added
 
-## 0.1.5 (2026-06-23)
 
-- `HEAD` and `OPTIONS` HTTP methods added
-- Smart tab completion for commands, methods, headers, URLs and saved request names
-- `--timeout <seconds>` CLI flag and `timeout <seconds>` builtin to set request timeout
-- New `clear` builtin to reset the entire session state
-- `Content-Type` header is now only auto-set when the body looks like JSON
-- Command history is now saved after every command (no more lost history on Ctrl-C/EOF)
-- `Ctrl-C` no longer exits the shell, it interrupts the current line instead
+### 🚀 Features
+- Persist session state to `~/.reqsh_state.json` in [#20](https://github.com/hars-21/reqsh/pull/20)
 
-## 0.1.4 (2026-06-13)
+### ❤️ New Contributors
 
-- `PATCH` method support added
-- HTTP methods are now case-insensitive (`GET`, `get`, `Get` all work)
-- Errors are printed to stderr when output is piped, stdout in interactive mode
-- Help text is more compact (fewer blank lines)
-- Invalid header names/values now show clear error messages instead of panicking
-- Empty input guard added to prevent crash on blank lines in multi-line mode
+* @Bircoder432 made their first contribution in [#20](https://github.com/hars-21/reqsh/pull/20)
+## [v0.1.5](https://github.com/hars-21/reqsh/compare/v0.1.4..v0.1.5) - 2026-06-23
 
-## 0.1.3 (2026-06-09)
 
-- Response time displayed with each request
-- Windows binary support (x86_64-pc-windows-msvc)
-- Absolute URLs now work (not just relative paths with `base`)
 
-## 0.1.2 (2026-06-06)
+### 🚀 Features
+- Smart tab completion in [#19](https://github.com/hars-21/reqsh/pull/19)
+- Added `--timeout` to stop indefinite requests in [#18](https://github.com/hars-21/reqsh/pull/18)
+- New builtin `clear` to clean the session state in [#16](https://github.com/hars-21/reqsh/pull/16)
+- Added `HEAD` and `OPTIONS` request methods in [#14](https://github.com/hars-21/reqsh/pull/14)
 
-- Variable interpolation with `{{name}}` syntax in paths, headers, and body
-- Query parameter support with `param: key=value` in request definitions
-- `save <name>` - save a request to session memory
-- `run <name>` - execute a saved request
-- `requests` - list all saved requests
-- `unset <name>` / `unset header <key>` - remove variables and headers
-- Added `set`, `unset`, `save`, `run`, `vars`, `headers`, `requests` to tab completion
+### 🐛 Bug Fixes
+- Auto set `Content-Type` header in [#17](https://github.com/hars-21/reqsh/pull/17)
+- `CTRL-C` / `EOF` loses command history in [#15](https://github.com/hars-21/reqsh/pull/15)
+## [v0.1.4](https://github.com/hars-21/reqsh/compare/v0.1.3..v0.1.4) - 2026-06-13
 
-## 0.1.1 (2026-05-26)
 
-- Added `--version`, `-v` flags to display version
-- Added `--help`, `-h` flags to display help text
 
-## 0.1.0 (2026-05-24)
+### 🚀 Features
+- Request methods are now case insensitive in [#3](https://github.com/hars-21/reqsh/pull/3)
 
-- Initial release
-- Interactive REPL with tab completion
-- Send GET, POST, PUT, DELETE requests
-- Multi-line request input for headers and body
-- Persistent session state (base URL, global headers)
-- JSON response pretty-printing
-- Command history and rerun by index
-- Colored terminal output
+### 🐛 Bug Fixes
+- Support multi-word header values
+
+### ❤️ New Contributors
+
+* @akglaza made their first contribution in [#3](https://github.com/hars-21/reqsh/pull/3)
+
+* @bakkdoor made their first contribution
+## [v0.1.3](https://github.com/hars-21/reqsh/compare/v0.1.2..v0.1.3) - 2026-06-09
+
+
+
+### 🚀 Features
+- Added response time
+
+### 🐛 Bug Fixes
+- Support for absolute URL and remove header override
+## [v0.1.2](https://github.com/hars-21/reqsh/compare/v0.1.1..v0.1.2) - 2026-06-06
+
+
+
+### 🚀 Features
+- Added requests command to view all the saved requests
+- New builtin commands - save and run requests
+- Added support for query params
+- New builtins: unset, headers, vars
+- In memory variables and interpolation
+- Installation script
+## [v0.1.1](https://github.com/hars-21/reqsh/compare/v0.1.0..v0.1.1) - 2026-05-26
+
+
+
+### 🚀 Features
+- Version and help commands
+## [v0.1.0] - 2026-05-24
+
+
+
+### 🚀 Features
+- Feat: history file is now served from root
+- Pretty print json response body
+- Pretty print and colorized response
+- New builtins history and rerun
+- Full response display with headers, status code, version
+- Global headers and history file rename
+- Feat: initial lexer implementation
+- Added support for DELETE requests
+- Added support for PUT requests
+- Added env variable commands
+- Added support for headers
+- Added POST method support
+- New builtin commands and in memory context
+
+### ❤️ New Contributors
+
+* @hars-21 made their first contribution
