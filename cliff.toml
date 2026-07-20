@@ -7,7 +7,10 @@ repo = "reqsh"
 
 [changelog]
 header = """
-# Changelog\n
+# Changelog
+
+Every release of reqsh, from the latest features to the smallest fixes.
+
 """
 body = """
 {%- macro remote_url() -%}
@@ -22,12 +25,12 @@ body = """
   {% endif %}\
 {% else %}\
 ## [Unreleased]
-{% endif %}
-
-{% for group_name in ["🚀 Features", "🐛 Bug Fixes", "🔒 Security", "⚡ Performance"] %}\
+{% endif %}\
+{% for group_name in ["Features", "Bug Fixes", "Security", "Performance"] %}\
 {% set group_commits = commits | filter(attribute="group", value=group_name) %}\
 {% if group_commits | length > 0 %}
 ### {{ group_name }}
+
 {% for commit in group_commits %}\
 - {{ commit.message | split(pat="\n") | first | upper_first | trim }}\
 {%- if commit.remote.pr_number %} in \
@@ -35,13 +38,15 @@ body = """
 {% endfor %}{% endif %}{% endfor %}\
 {% set new_contributors = github.contributors | filter(attribute="is_first_time", value=true) %}\
 {% if new_contributors | length > 0 %}
-### ❤️ New Contributors
+### New Contributors
 {% for contributor in new_contributors %}
 * @{{ contributor.username }} made their first contribution\
 {% if contributor.pr_number %} in \
 [#{{ contributor.pr_number }}]({{ self::remote_url() }}/pull/{{ contributor.pr_number }})\
+{% endif %}\
+{% endfor %}
 {% endif %}
-{% endfor %}{% endif %}
+
 """
 trim = true
 postprocessors = [
@@ -66,10 +71,10 @@ commit_parsers = [
   { message = "^style:", skip = true },
   { message = "^docs?:", skip = true },
   { message = "^revert:", skip = true },
-  { message = "^feat", group = "🚀 Features" },
-  { message = "^fix", group = "🐛 Bug Fixes" },
-  { body = ".*security", group = "🔒 Security" },
-  { message = "^perf", group = "⚡ Performance" },
+  { message = "^feat", group = "Features" },
+  { message = "^fix", group = "Bug Fixes" },
+  { body = ".*security", group = "Security" },
+  { message = "^perf", group = "Performance" },
 ]
 protect_breaking_commits = true
 filter_commits = false

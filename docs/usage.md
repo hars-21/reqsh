@@ -1,3 +1,9 @@
+---
+title: Usage
+description: Learn how to use reqsh for API testing workflows in the interactive REPL.
+order: 3
+---
+
 # Usage
 
 Learn how to use reqsh effectively for your API testing workflow.

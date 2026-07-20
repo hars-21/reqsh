@@ -1,3 +1,9 @@
+---
+title: Installation
+description: Install reqsh via script, prebuilt binary or build from source.
+order: 2
+---
+
 # Installation
 
 Get reqsh running on your system in seconds. Choose the method that best fits your workflow.

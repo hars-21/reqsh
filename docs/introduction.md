@@ -1,4 +1,10 @@
-# reqsh Documentation
+---
+title: Introduction
+description: Master the interactive HTTP shell - install, configure and execute requests.
+order: 1
+---
+
+# Introduction
 
 Master the interactive HTTP shell. Learn how to install, configure your environment and execute requests efficiently.
 
@@ -82,8 +88,6 @@ reqsh> GET /users
 .....> param: limit=20
 .....> ::send
 ```
-
-## Save & Run
 
 ## Timeout
 

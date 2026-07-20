@@ -1,3 +1,9 @@
+---
+title: Commands
+description: Full reference for all REPL commands available in reqsh.
+order: 4
+---
+
 # Commands
 
 Beyond standard HTTP methods (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS`), reqsh provides specific REPL commands to manage your session.

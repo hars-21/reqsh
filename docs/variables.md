@@ -1,3 +1,9 @@
+---
+title: Variables
+description: Store and interpolate variables in requests using {{name}} syntax.
+order: 5
+---
+
 # Variables
 
 Variables let you store reusable values and interpolate them into requests using `{{name}}` syntax.

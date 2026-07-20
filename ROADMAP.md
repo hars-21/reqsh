@@ -1,5 +1,7 @@
 # Roadmap
 
+Upcoming features and planned releases for reqsh.
+
 ## v0.3.0 - Request Management & Lifecycle
 
 Major focus on making requests work properly with full lifecycle support.
