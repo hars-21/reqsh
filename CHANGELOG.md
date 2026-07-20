@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.2.1](https://github.com/hars-21/reqsh/compare/v0.2.0..v0.2.1) - 2026-07-20
+
+
+
+### 🐛 Bug Fixes
+- Leading slash in relative urls ([#26](https://github.com/hars-21/reqsh/issues/26)) in [#26](https://github.com/hars-21/reqsh/pull/26)
 ## [v0.2.0](https://github.com/hars-21/reqsh/compare/v0.1.5..v0.2.0) - 2026-07-09
 
 
