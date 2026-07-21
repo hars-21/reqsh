@@ -84,6 +84,22 @@ impl ShellState {
         &self.saved_requests
     }
 
+    pub fn remove_request(&mut self, name: &str) -> Result<(), String> {
+        self.saved_requests
+            .remove(name)
+            .ok_or_else(|| format!("no saved request: {name}"))?;
+        Ok(())
+    }
+
+    pub fn rename_request(&mut self, existing_name: &str, new_name: String) -> Result<(), String> {
+        if let Some(value) = self.saved_requests.remove(existing_name) {
+            self.saved_requests.insert(new_name, value);
+            Ok(())
+        } else {
+            Err(format!("no saved request: {existing_name}"))
+        }
+    }
+
     pub fn get_base_url(&self) -> Option<&str> {
         self.base_url.as_deref()
     }
@@ -215,6 +231,41 @@ mod test {
         let saved = state.get_request("myreq");
         assert!(saved.is_some());
         assert_eq!(saved.unwrap().path, "/test");
+    }
+
+    #[test]
+    fn remove_request_deletes_it() {
+        use crate::request::Method;
+        let mut state = ShellState::new();
+        let req = crate::request::Request::new(Method::GET, "/test".to_string());
+        state.set_last_request(req);
+        state.save_request("myreq".to_string()).unwrap();
+        assert!(state.remove_request("myreq").is_ok());
+        assert!(state.get_request("myreq").is_none());
+    }
+
+    #[test]
+    fn remove_request_missing_returns_error() {
+        let mut state = ShellState::new();
+        assert!(state.remove_request("nonexistent").is_err());
+    }
+
+    #[test]
+    fn rename_request_renames_it() {
+        use crate::request::Method;
+        let mut state = ShellState::new();
+        let req = crate::request::Request::new(Method::GET, "/test".to_string());
+        state.set_last_request(req);
+        state.save_request("old-name".to_string()).unwrap();
+        assert!(state.rename_request("old-name", "new-name".to_string()).is_ok());
+        assert!(state.get_request("old-name").is_none());
+        assert!(state.get_request("new-name").is_some());
+    }
+
+    #[test]
+    fn rename_request_missing_returns_error() {
+        let mut state = ShellState::new();
+        assert!(state.rename_request("nonexistent", "new".to_string()).is_err());
     }
 
     #[test]
