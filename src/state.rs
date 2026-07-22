@@ -257,7 +257,11 @@ mod test {
         let req = crate::request::Request::new(Method::GET, "/test".to_string());
         state.set_last_request(req);
         state.save_request("old-name".to_string()).unwrap();
-        assert!(state.rename_request("old-name", "new-name".to_string()).is_ok());
+        assert!(
+            state
+                .rename_request("old-name", "new-name".to_string())
+                .is_ok()
+        );
         assert!(state.get_request("old-name").is_none());
         assert!(state.get_request("new-name").is_some());
     }
@@ -265,7 +269,11 @@ mod test {
     #[test]
     fn rename_request_missing_returns_error() {
         let mut state = ShellState::new();
-        assert!(state.rename_request("nonexistent", "new".to_string()).is_err());
+        assert!(
+            state
+                .rename_request("nonexistent", "new".to_string())
+                .is_err()
+        );
     }
 
     #[test]
