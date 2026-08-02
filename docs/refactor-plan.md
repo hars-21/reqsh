@@ -21,7 +21,7 @@
 - [ ] Move event loop
 - [x] Introduce Reader
 - [ ] Introduce Session
-- [ ] Introduce Command AST
-- [ ] Introduce Parser
+- [x] Introduce Command AST
+- [x] Introduce Parser
 - [ ] Introduce Executor
 - [ ] Introduce Client

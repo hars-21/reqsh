@@ -1,5 +1,6 @@
 use std::io::Error;
 
+use crate::parse::parse;
 use crate::reader::{ReadEvent, Reader};
 
 pub struct Repl {
@@ -22,7 +23,10 @@ impl Repl {
     pub fn run(&mut self) -> Result<(), Error> {
         loop {
             match self.reader.read()? {
-                ReadEvent::Input(input) => println!("You entered: {}", input),
+                ReadEvent::Input(input) => match parse(&input) {
+                    Ok(command) => println!("{:?}", command),
+                    Err(e) => eprintln!("{}", e),
+                },
                 ReadEvent::Interrupt => println!("^C"),
                 ReadEvent::Eof => break,
             }
