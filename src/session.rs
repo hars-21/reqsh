@@ -1,6 +1,14 @@
 use std::{collections::HashMap, time::Duration};
 
-use crate::ast::{HeaderCommand, SessionCommand, VariableCommand};
+use reqwest::{
+    Url,
+    header::{HeaderMap, HeaderName, HeaderValue},
+};
+
+use crate::{
+    ast::{HeaderCommand, RequestSpec, SessionCommand, VariableCommand},
+    http::{HttpRequest, to_reqwest_method},
+};
 
 #[derive(Debug, Default)]
 pub struct Session {
@@ -65,5 +73,47 @@ impl Session {
 
             HeaderCommand::List => {}
         }
+    }
+
+    pub fn build_request(&self, spec: RequestSpec) -> Result<HttpRequest, String> {
+        let base = self.base_url.as_ref().ok_or("base URL is not configured")?;
+
+        let url = Url::parse(base)
+            .map_err(|e| e.to_string())?
+            .join(&spec.path)
+            .map_err(|e| e.to_string())?;
+
+        let mut headers = HeaderMap::new();
+
+        // Session headers
+        for (name, value) in &self.headers {
+            headers.insert(
+                HeaderName::from_bytes(name.as_bytes()).map_err(|e| e.to_string())?,
+                HeaderValue::from_str(value).map_err(|e| e.to_string())?,
+            );
+        }
+
+        // Request headers override session headers
+        for header in spec.headers {
+            headers.insert(
+                HeaderName::from_bytes(header.name.as_bytes()).map_err(|e| e.to_string())?,
+                HeaderValue::from_str(&header.value).map_err(|e| e.to_string())?,
+            );
+        }
+
+        let method = to_reqwest_method(spec.method);
+
+        let body = if spec.body.is_empty() {
+            None
+        } else {
+            Some(spec.body.into_bytes())
+        };
+
+        Ok(HttpRequest {
+            method,
+            url,
+            headers,
+            body,
+        })
     }
 }

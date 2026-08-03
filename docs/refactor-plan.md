@@ -24,4 +24,4 @@
 - [x] Introduce Command AST
 - [x] Introduce Parser
 - [x] Introduce Executor
-- [ ] Introduce Client
+- [x] Introduce Client

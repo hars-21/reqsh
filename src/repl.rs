@@ -1,6 +1,6 @@
 use std::io::Error;
 
-use crate::execute::{ControlFlow, Executor, Output};
+use crate::execute::{ControlFlow, Executor};
 use crate::parse::parse;
 use crate::reader::{ReadEvent, Reader};
 use crate::session::Session;
@@ -42,18 +42,20 @@ impl Repl {
                 }
             };
 
-            let result = self.executor.execute(command, &mut self.session);
+            println!("Parsed command: {:?}", command);
 
-            match result.output {
-                Output::Text(text) => {
-                    print!("{}", text);
+            match self.executor.execute(command, &mut self.session) {
+                Ok(result) => {
+                    println!("{:?}", result.output);
+
+                    if matches!(result.control_flow, ControlFlow::Exit) {
+                        break;
+                    }
                 }
-                Output::None => {}
-            }
 
-            match result.control_flow {
-                ControlFlow::Exit => break,
-                ControlFlow::Continue => {}
+                Err(err) => {
+                    eprintln!("Error: {:?}", err);
+                }
             }
         }
 

@@ -1,19 +1,26 @@
+use reqwest::blocking::Response;
+
 use crate::{
     ast::{Command, ShellCommand},
     help::help_text,
+    http::Client,
     session::Session,
 };
 
-pub struct Executor;
+pub struct Executor {
+    client: Client,
+}
 
 pub enum ControlFlow {
     Continue,
     Exit,
 }
 
+#[derive(Debug)]
 pub enum Output {
-    Text(String),
     None,
+    Text(String),
+    HttpResponse(Response),
 }
 
 pub struct ExecutionResult {
@@ -21,30 +28,43 @@ pub struct ExecutionResult {
     pub output: Output,
 }
 
+#[derive(Debug)]
+pub enum ExecutionError {
+    HttpError(String),
+    SessionError(String),
+    VariableError(String),
+}
+
 impl Executor {
     pub fn new() -> Self {
-        Self
+        Self {
+            client: Client::new(),
+        }
     }
 
-    pub fn execute(&mut self, command: Command, session: &mut Session) -> ExecutionResult {
+    pub fn execute(
+        &mut self,
+        command: Command,
+        session: &mut Session,
+    ) -> Result<ExecutionResult, ExecutionError> {
         match command {
             Command::Session(command) => {
                 session.apply_session(command);
-                ExecutionResult {
+                Ok(ExecutionResult {
                     control_flow: ControlFlow::Continue,
                     output: Output::None,
-                }
+                })
             }
 
             Command::Variable(command) => {
                 session.apply_variable(command);
-                ExecutionResult {
+                Ok(ExecutionResult {
                     control_flow: ControlFlow::Continue,
                     output: Output::None,
-                }
+                })
             }
 
-            Command::Shell(command) => self.execute_shell(command),
+            Command::Shell(command) => Ok(self.execute_shell(command)),
 
             Command::History(_) => {
                 todo!("history")
@@ -54,8 +74,21 @@ impl Executor {
                 todo!("saved requests")
             }
 
-            Command::Http(_) => {
-                todo!("http requests")
+            Command::Http(command) => {
+                let request = session
+                    .build_request(command)
+                    .map_err(|e| ExecutionError::SessionError(e))?;
+
+                match self.client.send(request) {
+                    Ok(response) => Ok(ExecutionResult {
+                        control_flow: ControlFlow::Continue,
+                        output: Output::HttpResponse(response),
+                    }),
+                    Err(err) => Err(ExecutionError::HttpError(format!(
+                        "HTTP request failed: {}",
+                        err
+                    ))),
+                }
             }
         }
     }
