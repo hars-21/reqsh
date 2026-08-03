@@ -20,7 +20,7 @@
 - [x] Introduce Repl
 - [ ] Move event loop
 - [x] Introduce Reader
-- [ ] Introduce Session
+- [x] Introduce Session
 - [x] Introduce Command AST
 - [x] Introduce Parser
 - [ ] Introduce Executor
