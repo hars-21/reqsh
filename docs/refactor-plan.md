@@ -23,5 +23,5 @@
 - [x] Introduce Session
 - [x] Introduce Command AST
 - [x] Introduce Parser
-- [ ] Introduce Executor
+- [x] Introduce Executor
 - [ ] Introduce Client
