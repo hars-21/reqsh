@@ -15,6 +15,7 @@ pub struct HttpRequest {
     pub url: Url,
     pub headers: HeaderMap,
     pub body: Option<Vec<u8>>,
+    pub timeout: Option<Duration>,
 }
 
 pub struct Client {
@@ -39,6 +40,10 @@ impl Client {
             .client
             .request(request.method, request.url)
             .headers(request.headers);
+
+        if let Some(timeout) = request.timeout {
+            builder = builder.timeout(timeout);
+        }
 
         if let Some(body) = request.body {
             builder = builder.body(body);

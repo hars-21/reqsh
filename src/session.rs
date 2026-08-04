@@ -7,15 +7,18 @@ use reqwest::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    ast::{HeaderCommand, RequestSpec, SessionCommand, VariableCommand},
+    ast::RequestSpec,
     http::{HttpRequest, to_reqwest_method},
 };
 
 #[derive(Debug, Default, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Session {
     base_url: Option<String>,
     headers: HashMap<String, String>,
     variables: HashMap<String, String>,
+    last_request: Option<RequestSpec>,
+    saved_requests: HashMap<String, RequestSpec>,
     #[serde(with = "duration_secs")]
     timeout: Option<Duration>,
 }
@@ -53,69 +56,78 @@ impl Session {
         home.join(".reqsh_state.json")
     }
 
-    pub fn set_timeout(&mut self, timeout_secs: u64) {
-        self.timeout = Some(Duration::from_secs(timeout_secs));
+    pub fn base_url(&mut self) -> &mut Option<String> {
+        &mut self.base_url
     }
 
-    pub fn apply_session(&mut self, command: SessionCommand) {
-        match command {
-            SessionCommand::Base(url) => {
-                self.base_url = Some(url);
-            }
-
-            SessionCommand::Timeout(timeout) => {
-                self.timeout = Some(timeout);
-            }
-
-            SessionCommand::Header(command) => {
-                self.apply_header(command);
-            }
-        }
+    pub fn headers(&mut self) -> &mut HashMap<String, String> {
+        &mut self.headers
     }
 
-    pub fn apply_variable(&mut self, command: VariableCommand) {
-        match command {
-            VariableCommand::Set { name, value } => {
-                self.variables.insert(name, value);
-            }
-
-            VariableCommand::Remove { name } => {
-                self.variables.remove(&name);
-            }
-
-            VariableCommand::Clear => {
-                self.variables.clear();
-            }
-
-            VariableCommand::List => {}
-        }
+    pub fn variables(&mut self) -> &mut HashMap<String, String> {
+        &mut self.variables
     }
 
-    fn apply_header(&mut self, command: HeaderCommand) {
-        match command {
-            HeaderCommand::Set { name, value } => {
-                self.headers.insert(name, value);
-            }
+    pub fn last_request(&mut self) -> &mut Option<RequestSpec> {
+        &mut self.last_request
+    }
 
-            HeaderCommand::Remove { name } => {
-                self.headers.remove(&name);
-            }
+    pub fn saved_requests(&mut self) -> &mut HashMap<String, RequestSpec> {
+        &mut self.saved_requests
+    }
 
-            HeaderCommand::Clear => {
-                self.headers.clear();
-            }
+    pub fn timeout(&mut self) -> &mut Option<Duration> {
+        &mut self.timeout
+    }
 
-            HeaderCommand::List => {}
-        }
+    pub fn save_request(&mut self, name: String) -> Result<(), String> {
+        let request = self.last_request.clone().ok_or("no request to save")?;
+
+        self.saved_requests.insert(name, request);
+        Ok(())
+    }
+
+    pub fn remove_request(&mut self, name: &str) -> Result<(), String> {
+        self.saved_requests
+            .remove(name)
+            .map(|_| ())
+            .ok_or_else(|| format!("no saved request: {name}"))
+    }
+
+    pub fn rename_request(&mut self, old_name: &str, new_name: String) -> Result<(), String> {
+        let request = self
+            .saved_requests
+            .remove(old_name)
+            .ok_or_else(|| format!("no saved request: {old_name}"))?;
+
+        self.saved_requests.insert(new_name, request);
+        Ok(())
+    }
+
+    pub fn clear_requests(&mut self) {
+        self.saved_requests.clear();
     }
 
     pub fn build_request(&self, spec: RequestSpec) -> Result<HttpRequest, String> {
-        let base = self.base_url.as_ref().ok_or("base URL is not configured")?;
+        let path = self.interpolate(&spec.path)?;
 
-        let url = Url::parse(base)
-            .map_err(|e| e.to_string())?
-            .join(&spec.path)
-            .map_err(|e| e.to_string())?;
+        let mut url = if path.starts_with("http://") || path.starts_with("https://") {
+            Url::parse(&path).map_err(|e| e.to_string())?
+        } else {
+            let base = self.base_url.as_ref().ok_or("base URL is not configured")?;
+
+            Url::parse(base)
+                .map_err(|e| e.to_string())?
+                .join(&path)
+                .map_err(|e| e.to_string())?
+        };
+
+        if !spec.queries.is_empty() {
+            let mut pairs = url.query_pairs_mut();
+            for query in &spec.queries {
+                pairs.append_pair(&query.name, &self.interpolate(&query.value)?);
+            }
+        }
 
         let mut headers = HeaderMap::new();
 
@@ -131,7 +143,8 @@ impl Session {
         for header in spec.headers {
             headers.insert(
                 HeaderName::from_bytes(header.name.as_bytes()).map_err(|e| e.to_string())?,
-                HeaderValue::from_str(&header.value).map_err(|e| e.to_string())?,
+                HeaderValue::from_str(&self.interpolate(&header.value)?)
+                    .map_err(|e| e.to_string())?,
             );
         }
 
@@ -140,7 +153,7 @@ impl Session {
         let body = if spec.body.is_empty() {
             None
         } else {
-            Some(spec.body.into_bytes())
+            Some(self.interpolate(&spec.body)?.into_bytes())
         };
 
         Ok(HttpRequest {
@@ -148,7 +161,36 @@ impl Session {
             url,
             headers,
             body,
+            timeout: self.timeout,
         })
+    }
+
+    fn interpolate(&self, input: &str) -> Result<String, String> {
+        let mut output = String::new();
+        let mut rest = input;
+
+        while let Some(start) = rest.find("{{") {
+            output.push_str(&rest[..start]);
+            let tail = &rest[start + 2..];
+
+            match tail.find("}}") {
+                Some(end) => {
+                    let name = tail[..end].trim();
+                    let value = self
+                        .variables
+                        .get(name)
+                        .ok_or_else(|| format!("undefined variable: {name}"))?;
+
+                    output.push_str(value);
+                    rest = &tail[end + 2..];
+                }
+
+                None => return Err(format!("unclosed `{{{{` in: {input}")),
+            }
+        }
+
+        output.push_str(rest);
+        Ok(output)
     }
 }
 

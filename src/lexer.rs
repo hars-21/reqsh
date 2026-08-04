@@ -40,13 +40,28 @@ impl Lexer {
         while let Some(line) = lines.next() {
             // Empty line means body starts
             if line.trim().is_empty() {
-                let body = lines.collect::<Vec<_>>().join("\n");
+                let mut body = Vec::new();
+
+                for rest in lines.by_ref() {
+                    if rest.trim() == "###" {
+                        break;
+                    }
+
+                    body.push(rest);
+                }
+
+                let body = body.join("\n");
 
                 if !body.is_empty() {
                     tokens.push(Token::Body(body));
                 }
 
                 break;
+            }
+
+            // Request terminator
+            if line.trim() == "###" {
+                continue;
             }
 
             tokens.extend(Self::lex_line(line)?);

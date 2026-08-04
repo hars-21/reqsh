@@ -57,12 +57,16 @@ impl ParserState {
     fn parse_command(&mut self) -> Result<Command, ParserError> {
         let first = self.next_string().ok_or(ParserError::EmptyInput)?;
 
-        match first.as_str() {
+        match first.to_ascii_uppercase().as_str() {
             // HTTP commands
             "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD" | "OPTIONS" => {
-                self.parse_http(first)
+                return self.parse_http(first);
             }
 
+            _ => {}
+        }
+
+        match first.as_str() {
             // Session commands
             "base" | "timeout" | "header" => self.parse_session(first),
 
@@ -109,6 +113,8 @@ impl ParserState {
                 Token::Word(word) => {
                     if let Some(name) = word.strip_suffix(':') {
                         let name = name.trim().to_string();
+                        self.advance();
+
                         let value = self.collect(" ").unwrap_or_default();
 
                         headers.push(Header { name, value });
@@ -275,10 +281,6 @@ impl ParserState {
                 index: self.parse_index()?,
             },
 
-            Some("remove") => HistoryCommand::Remove {
-                index: self.parse_index()?,
-            },
-
             Some("clear") => HistoryCommand::Clear,
 
             Some("rerun") => HistoryCommand::Rerun {
@@ -373,7 +375,7 @@ impl ParserState {
 
 impl Method {
     fn from_string(value: &str) -> Option<Self> {
-        match value {
+        match value.to_ascii_uppercase().as_str() {
             "GET" => Some(Method::Get),
 
             "POST" => Some(Method::Post),

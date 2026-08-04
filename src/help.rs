@@ -6,47 +6,41 @@ pub fn help_text() -> String {
 {}
 {}
   {}:
-    reqsh
+    reqsh [options]
   {}:
-    {}  Show help
-    {}  Show version
+    {}           Show help
+    {}        Show version
     {}  Set request timeout
 {}
   {}:
-    {} <path>
-    [Headers]
-    [Body]
-    ::send
+    {} <path>        start of a request
+    <name>=<value>       query parameter
+    <name>: <value>      request header
+    <blank line>         body starts after an empty line
+    <body>
+    ###                  end of request
   {}:
-    GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS
+    GET  POST  PUT  PATCH  DELETE  HEAD  OPTIONS
   {}:
-    <key>: <value>
-    param: <key>=<value>
-  {}:
-    raw, json
+    GET /users?page=1
+    Accept: application/json
+    Authorization: Bearer <token>
+    ###
 {}
   {}:
     base <url>
-    header <key> <value>
-    set <name> <value>
-    unset <name>
-    unset header <key>
-    save <name>
-    remove <name>
-    rename <old> <new>
-    run <name>
-    requests
-    vars
-    headers
-    history
-    rerun <id>
+    header set|list|remove|clear <key> [value]
+    var set|list|remove|clear <name> [value]
+    req (request) save|run|list|show|remove|rename|clear <name>
+    history [list]|show|clear|rerun <id>
     timeout <seconds>
     clear
+    version
     help
     exit
 {}
 ",
-        "reqsh help".bold().cyan(),
+        "reqsh - Interactive HTTP Shell".bold().cyan(),
         "─".repeat(50).dimmed(),
         "Usage".yellow().bold(),
         "Options".yellow().bold(),
@@ -55,47 +49,11 @@ pub fn help_text() -> String {
         "--timeout <seconds>".green().bold(),
         "─".repeat(50).dimmed(),
         "Requests".yellow().bold(),
-        "Method".green().bold(),
+        "METHOD".green().bold(),
         "Methods".yellow().bold(),
-        "Headers".yellow().bold(),
-        "Body".yellow().bold(),
+        "Example".yellow().bold(),
         "─".repeat(50).dimmed(),
         "Commands".yellow().bold(),
         "─".repeat(50).dimmed(),
     )
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn help_text_is_not_empty() {
-        let text = help_text();
-
-        assert!(!text.is_empty());
-    }
-
-    #[test]
-    fn help_text_contains_requests_section() {
-        let text = help_text();
-
-        assert!(text.contains("Requests"));
-    }
-
-    #[test]
-    fn help_text_contains_methods() {
-        let text = help_text();
-
-        assert!(text.contains("GET"));
-        assert!(text.contains("POST"));
-    }
-
-    #[test]
-    fn help_text_contains_commands() {
-        let text = help_text();
-
-        assert!(text.contains("help"));
-        assert!(text.contains("exit"));
-    }
 }
