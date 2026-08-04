@@ -1,120 +1,335 @@
-use std::collections::HashMap;
+use std::fmt;
 
-use crate::{display::display_response, request::Request, runner::fetch, state::ShellState};
+use crate::{
+    ast::{
+        Command, HeaderCommand, RequestCommand, RequestSpec, SessionCommand, ShellCommand,
+        VariableCommand,
+    },
+    help::help_text,
+    http::{Client, HttpResponse},
+    session::Session,
+};
 
-fn interpolate(s: &str, vars: &HashMap<String, String>) -> Result<String, String> {
-    let mut out = String::new();
-    let mut rest = s;
-    while let Some(start) = rest.find("{{") {
-        out.push_str(&rest[..start]);
-        let tail = &rest[start + 2..];
-        match tail.find("}}") {
-            Some(end) => {
-                let name = tail[..end].trim();
-                let val = vars
-                    .get(name)
-                    .ok_or_else(|| format!("undefined variable: {name}"))?;
-                out.push_str(val);
-                rest = &tail[end + 2..];
-            }
-            None => return Err(format!("unclosed `{{{{` in: {s}")),
+pub struct Executor {
+    client: Client,
+}
+
+pub enum ControlFlow {
+    Continue,
+    Exit,
+}
+
+#[derive(Debug)]
+pub enum Output {
+    None,
+    Text(String),
+    HttpResponse(HttpResponse),
+}
+
+pub struct ExecutionResult {
+    pub control_flow: ControlFlow,
+    pub output: Output,
+}
+
+#[derive(Debug)]
+pub enum ExecutionError {
+    HttpError(String),
+    SessionError(String),
+    VariableError(String),
+}
+
+impl fmt::Display for ExecutionError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ExecutionError::HttpError(message) => write!(f, "http: {}", message),
+            ExecutionError::SessionError(message) => write!(f, "session: {}", message),
+            ExecutionError::VariableError(message) => write!(f, "variable: {}", message),
         }
     }
-    out.push_str(rest);
-    Ok(out)
 }
 
-pub fn execute(req: Request, ctx: &ShellState) -> Result<String, String> {
-    let vars = ctx.get_variables();
-    let path = interpolate(&req.path, vars)?;
-    let body = match &req.body {
-        Some(b) => Some(interpolate(b, vars)?),
-        None => None,
-    };
-    let headers: HashMap<_, _> = req
-        .headers
-        .iter()
-        .map(|(k, v)| Ok((k.clone(), interpolate(v, vars)?)))
-        .collect::<Result<_, String>>()?;
+impl std::error::Error for ExecutionError {}
 
-    let params: HashMap<_, _> = req
-        .params
-        .iter()
-        .map(|(k, v)| Ok((k.clone(), interpolate(v, vars)?)))
-        .collect::<Result<_, String>>()?;
-
-    let req = Request {
-        path,
-        body,
-        headers,
-        params,
-        ..req
-    };
-
-    let base_url = ctx.get_base_url();
-    let global_headers = ctx.get_headers();
-    let timeout_secs = ctx.get_timeout();
-    let response = fetch(&req, base_url, global_headers, timeout_secs);
-
-    match response {
-        Ok((res, duration)) => Ok(display_response(res, duration)),
-        Err(e) => Err(e),
+impl Default for Executor {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::request::Method;
-
-    #[test]
-    fn execute_returns_result() {
-        let req = Request::new(Method::GET, "/users".to_string());
-        let state = ShellState::new();
-        let result = execute(req, &state);
-
-        assert!(result.is_ok() || result.is_err());
+impl Executor {
+    pub fn new() -> Self {
+        Self {
+            client: Client::new(),
+        }
     }
 
-    #[test]
-    fn execute_fails_without_base_url() {
-        let req = Request::new(Method::GET, "/users".to_string());
-        let state = ShellState::new();
-        let result = execute(req, &state);
+    pub fn execute(
+        &mut self,
+        command: Command,
+        session: &mut Session,
+    ) -> Result<ExecutionResult, ExecutionError> {
+        match command {
+            Command::Session(command) => self.execute_session(command, session),
 
-        assert!(result.is_err());
+            Command::Variable(command) => Ok(self.execute_variable(command, session)),
+
+            Command::Shell(command) => Ok(self.execute_shell(command)),
+
+            Command::History(_) => {
+                todo!("history")
+            }
+
+            Command::Request(command) => self.execute_request(command, session),
+
+            Command::Http(spec) => {
+                *session.last_request() = Some(spec.clone());
+                self.send_spec(spec, session)
+            }
+        }
     }
 
-    #[test]
-    fn interpolate_passthrough() {
-        let vars = HashMap::new();
-        assert_eq!(interpolate("hello", &vars).unwrap(), "hello");
+    fn execute_session(
+        &self,
+        command: SessionCommand,
+        session: &mut Session,
+    ) -> Result<ExecutionResult, ExecutionError> {
+        let result = match command {
+            SessionCommand::Base(url) => {
+                *session.base_url() = Some(url);
+
+                ExecutionResult {
+                    control_flow: ControlFlow::Continue,
+                    output: Output::None,
+                }
+            }
+
+            SessionCommand::Timeout(duration) => {
+                *session.timeout() = Some(duration);
+
+                ExecutionResult {
+                    control_flow: ControlFlow::Continue,
+                    output: Output::None,
+                }
+            }
+
+            SessionCommand::Header(command) => self.execute_header(command, session),
+        };
+
+        Ok(result)
     }
 
-    #[test]
-    fn interpolate_replaces_variable() {
-        let mut vars = HashMap::new();
-        vars.insert("name".to_string(), "world".to_string());
-        assert_eq!(interpolate("hello {{name}}", &vars).unwrap(), "hello world");
+    fn execute_header(&self, command: HeaderCommand, session: &mut Session) -> ExecutionResult {
+        match command {
+            HeaderCommand::Set { name, value } => {
+                session.headers().insert(name, value);
+            }
+
+            HeaderCommand::List => {
+                let lines = session
+                    .headers()
+                    .iter()
+                    .map(|(name, value)| format!("{name}: {value}"))
+                    .collect::<Vec<_>>()
+                    .join("\n");
+
+                return ExecutionResult {
+                    control_flow: ControlFlow::Continue,
+                    output: Output::Text(lines),
+                };
+            }
+
+            HeaderCommand::Remove { name } => {
+                session.headers().remove(&name);
+            }
+
+            HeaderCommand::Clear => {
+                session.headers().clear();
+            }
+        }
+
+        ExecutionResult {
+            control_flow: ControlFlow::Continue,
+            output: Output::None,
+        }
     }
 
-    #[test]
-    fn interpolate_undefined_errors() {
-        let vars = HashMap::new();
-        assert!(interpolate("{{missing}}", &vars).is_err());
+    fn execute_variable(&self, command: VariableCommand, session: &mut Session) -> ExecutionResult {
+        match command {
+            VariableCommand::Set { name, value } => {
+                session.variables().insert(name, value);
+            }
+
+            VariableCommand::List => {
+                let lines = session
+                    .variables()
+                    .iter()
+                    .map(|(name, value)| format!("{name} = {value}"))
+                    .collect::<Vec<_>>()
+                    .join("\n");
+
+                return ExecutionResult {
+                    control_flow: ControlFlow::Continue,
+                    output: Output::Text(lines),
+                };
+            }
+
+            VariableCommand::Remove { name } => {
+                session.variables().remove(&name);
+            }
+
+            VariableCommand::Clear => {
+                session.variables().clear();
+            }
+        }
+
+        ExecutionResult {
+            control_flow: ControlFlow::Continue,
+            output: Output::None,
+        }
     }
 
-    #[test]
-    fn interpolate_unclosed_errors() {
-        let vars = HashMap::new();
-        assert!(interpolate("{{unclosed", &vars).is_err());
+    fn execute_request(
+        &mut self,
+        command: RequestCommand,
+        session: &mut Session,
+    ) -> Result<ExecutionResult, ExecutionError> {
+        let result = match command {
+            RequestCommand::Save { name } => {
+                session
+                    .save_request(name.clone())
+                    .map_err(ExecutionError::SessionError)?;
+
+                ExecutionResult {
+                    control_flow: ControlFlow::Continue,
+                    output: Output::Text(format!("saved request: {name}")),
+                }
+            }
+
+            RequestCommand::Run { name } => {
+                let spec = session
+                    .saved_requests()
+                    .get(&name)
+                    .cloned()
+                    .ok_or_else(|| {
+                        ExecutionError::SessionError(format!("no saved request: {name}"))
+                    })?;
+
+                return self.send_spec(spec, session);
+            }
+
+            RequestCommand::List => {
+                let lines = session
+                    .saved_requests()
+                    .iter()
+                    .map(|(name, spec)| {
+                        format!("{} ({}) {}", name, spec.method.as_str(), spec.path)
+                    })
+                    .collect::<Vec<_>>()
+                    .join("\n");
+
+                ExecutionResult {
+                    control_flow: ControlFlow::Continue,
+                    output: Output::Text(lines),
+                }
+            }
+
+            RequestCommand::Show { name } => {
+                let spec = session
+                    .saved_requests()
+                    .get(&name)
+                    .cloned()
+                    .ok_or_else(|| {
+                        ExecutionError::SessionError(format!("no saved request: {name}"))
+                    })?;
+
+                ExecutionResult {
+                    control_flow: ControlFlow::Continue,
+                    output: Output::Text(spec.to_string()),
+                }
+            }
+
+            RequestCommand::Rename { old_name, new_name } => {
+                session
+                    .rename_request(&old_name, new_name.clone())
+                    .map_err(ExecutionError::SessionError)?;
+
+                ExecutionResult {
+                    control_flow: ControlFlow::Continue,
+                    output: Output::Text(format!("renamed {old_name} to {new_name}")),
+                }
+            }
+
+            RequestCommand::Remove { name } => {
+                session
+                    .remove_request(&name)
+                    .map_err(ExecutionError::SessionError)?;
+
+                ExecutionResult {
+                    control_flow: ControlFlow::Continue,
+                    output: Output::Text(format!("removed request: {name}")),
+                }
+            }
+
+            RequestCommand::Clear => {
+                session.clear_requests();
+
+                ExecutionResult {
+                    control_flow: ControlFlow::Continue,
+                    output: Output::Text("cleared saved requests".to_string()),
+                }
+            }
+        };
+
+        Ok(result)
     }
 
-    #[test]
-    fn interpolate_multiple_vars() {
-        let mut vars = HashMap::new();
-        vars.insert("a".to_string(), "1".to_string());
-        vars.insert("b".to_string(), "2".to_string());
-        assert_eq!(interpolate("{{a}}-{{b}}", &vars).unwrap(), "1-2");
+    fn send_spec(
+        &mut self,
+        spec: RequestSpec,
+        session: &Session,
+    ) -> Result<ExecutionResult, ExecutionError> {
+        let request = session
+            .build_request(spec)
+            .map_err(ExecutionError::SessionError)?;
+
+        let response = self
+            .client
+            .send(request)
+            .map_err(|e| ExecutionError::HttpError(format!("request failed: {e}")))?;
+
+        Ok(ExecutionResult {
+            control_flow: ControlFlow::Continue,
+            output: Output::HttpResponse(response),
+        })
+    }
+
+    fn execute_shell(&self, command: ShellCommand) -> ExecutionResult {
+        match command {
+            ShellCommand::Help => {
+                let help_text = help_text();
+                ExecutionResult {
+                    control_flow: ControlFlow::Continue,
+                    output: Output::Text(help_text),
+                }
+            }
+
+            ShellCommand::Version => {
+                let version = env!("CARGO_PKG_VERSION");
+                ExecutionResult {
+                    control_flow: ControlFlow::Continue,
+                    output: Output::Text(version.to_string()),
+                }
+            }
+
+            ShellCommand::Clear => ExecutionResult {
+                control_flow: ControlFlow::Continue,
+                output: Output::Text("\x1b[2J\x1b[H".to_string()),
+            },
+
+            ShellCommand::Exit => ExecutionResult {
+                control_flow: ControlFlow::Exit,
+                output: Output::None,
+            },
+        }
     }
 }

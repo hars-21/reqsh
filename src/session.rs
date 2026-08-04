@@ -214,3 +214,208 @@ mod duration_secs {
         Ok(secs.map(Duration::from_secs))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::time::Duration;
+
+    use super::*;
+    use crate::ast::{Header, Method, Query, RequestSpec};
+
+    fn request(method: Method, path: &str) -> RequestSpec {
+        RequestSpec {
+            method,
+            path: path.to_string(),
+            headers: Vec::new(),
+            queries: Vec::new(),
+            body: String::new(),
+        }
+    }
+
+    fn session_with_base(base: &str) -> Session {
+        let mut session = Session::new();
+        *session.base_url() = Some(base.to_string());
+        session
+    }
+
+    #[test]
+    fn interpolate_passthrough() {
+        let session = Session::new();
+        assert_eq!(session.interpolate("hello").unwrap(), "hello");
+    }
+
+    #[test]
+    fn interpolate_replaces_variable() {
+        let mut session = Session::new();
+        session
+            .variables()
+            .insert("name".to_string(), "world".to_string());
+        assert_eq!(
+            session.interpolate("hello {{name}}").unwrap(),
+            "hello world"
+        );
+    }
+
+    #[test]
+    fn interpolate_undefined_variable_errors() {
+        let session = Session::new();
+        assert!(session.interpolate("{{missing}}").is_err());
+    }
+
+    #[test]
+    fn interpolate_unclosed_errors() {
+        let session = Session::new();
+        assert!(session.interpolate("{{unclosed").is_err());
+    }
+
+    #[test]
+    fn interpolate_multiple_variables() {
+        let mut session = Session::new();
+        session.variables().insert("a".to_string(), "1".to_string());
+        session.variables().insert("b".to_string(), "2".to_string());
+        assert_eq!(session.interpolate("{{a}}-{{b}}").unwrap(), "1-2");
+    }
+
+    #[test]
+    fn build_request_fails_without_base_url() {
+        let session = Session::new();
+        assert!(
+            session
+                .build_request(request(Method::Get, "/users"))
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn build_request_resolves_relative_path() {
+        let session = session_with_base("http://localhost:8123");
+        let http = session
+            .build_request(request(Method::Get, "/users"))
+            .unwrap();
+        assert_eq!(http.url.as_str(), "http://localhost:8123/users");
+    }
+
+    #[test]
+    fn build_request_uses_absolute_url_without_base() {
+        let session = Session::new();
+        let http = session
+            .build_request(request(Method::Get, "http://example.com/foo"))
+            .unwrap();
+        assert_eq!(http.url.as_str(), "http://example.com/foo");
+    }
+
+    #[test]
+    fn build_request_appends_queries() {
+        let session = session_with_base("http://localhost:8123");
+        let mut spec = request(Method::Get, "/users");
+        spec.queries = vec![Query {
+            name: "page".to_string(),
+            value: "1".to_string(),
+        }];
+        let http = session.build_request(spec).unwrap();
+        assert_eq!(http.url.as_str(), "http://localhost:8123/users?page=1");
+    }
+
+    #[test]
+    fn build_request_interpolates_path() {
+        let mut session = session_with_base("http://localhost:8123");
+        session
+            .variables()
+            .insert("id".to_string(), "42".to_string());
+        let http = session
+            .build_request(request(Method::Get, "/users/{{id}}"))
+            .unwrap();
+        assert_eq!(http.url.as_str(), "http://localhost:8123/users/42");
+    }
+
+    #[test]
+    fn build_request_interpolates_header_value() {
+        let mut session = session_with_base("http://localhost:8123");
+        session
+            .variables()
+            .insert("token".to_string(), "abc".to_string());
+        let mut spec = request(Method::Get, "/users");
+        spec.headers = vec![Header {
+            name: "Authorization".to_string(),
+            value: "Bearer {{token}}".to_string(),
+        }];
+        let http = session.build_request(spec).unwrap();
+        assert_eq!(http.headers.get("authorization").unwrap(), "Bearer abc");
+    }
+
+    #[test]
+    fn build_request_sets_timeout() {
+        let mut session = session_with_base("http://localhost:8123");
+        session.timeout().replace(Duration::from_secs(5));
+        let http = session
+            .build_request(request(Method::Get, "/users"))
+            .unwrap();
+        assert_eq!(http.timeout, Some(Duration::from_secs(5)));
+    }
+
+    #[test]
+    fn save_request_needs_last_request() {
+        let mut session = Session::new();
+        assert!(session.save_request("foo".to_string()).is_err());
+    }
+
+    #[test]
+    fn save_and_get_request() {
+        let mut session = Session::new();
+        *session.last_request() = Some(request(Method::Get, "/users"));
+        session.save_request("foo".to_string()).unwrap();
+        assert_eq!(session.saved_requests().get("foo").unwrap().path, "/users");
+    }
+
+    #[test]
+    fn remove_request_missing_errors() {
+        let mut session = Session::new();
+        assert!(session.remove_request("nonexistent").is_err());
+    }
+
+    #[test]
+    fn rename_request_renames_it() {
+        let mut session = Session::new();
+        *session.last_request() = Some(request(Method::Get, "/users"));
+        session.save_request("old".to_string()).unwrap();
+        session.rename_request("old", "new".to_string()).unwrap();
+        assert!(session.saved_requests().get("old").is_none());
+        assert!(session.saved_requests().get("new").is_some());
+    }
+
+    #[test]
+    fn rename_request_missing_errors() {
+        let mut session = Session::new();
+        assert!(
+            session
+                .rename_request("nonexistent", "new".to_string())
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn state_serde_roundtrip() {
+        let mut session = session_with_base("http://localhost:8123");
+        session
+            .headers()
+            .insert("Auth".to_string(), "Token123".to_string());
+        session
+            .variables()
+            .insert("user".to_string(), "admin".to_string());
+        session.timeout().replace(Duration::from_secs(60));
+        *session.last_request() = Some(request(Method::Post, "/login"));
+        session.save_request("login".to_string()).unwrap();
+
+        let json = serde_json::to_string(&session).unwrap();
+        let mut loaded: Session = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(
+            *loaded.base_url(),
+            Some("http://localhost:8123".to_string())
+        );
+        assert_eq!(loaded.headers().get("Auth"), Some(&"Token123".to_string()));
+        assert_eq!(loaded.variables().get("user"), Some(&"admin".to_string()));
+        assert_eq!(*loaded.timeout(), Some(Duration::from_secs(60)));
+        assert!(loaded.saved_requests().contains_key("login"));
+    }
+}

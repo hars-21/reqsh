@@ -10,6 +10,7 @@ pub enum Token {
     End,
 }
 
+#[derive(Debug)]
 pub enum LexerError {
     UnterminatedString,
     InvalidVariable,
@@ -195,5 +196,47 @@ impl Lexer {
         }
 
         Ok(tokens)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn tokens(input: &str) -> Vec<Token> {
+        Lexer::lex(input).unwrap()
+    }
+
+    fn body(input: &str) -> Option<String> {
+        tokens(input).into_iter().find_map(|token| match token {
+            Token::Body(body) => Some(body),
+            _ => None,
+        })
+    }
+
+    #[test]
+    fn terminator_line_is_dropped() {
+        let tokens = tokens("GET /users\npage=1\n###");
+        assert!(
+            !tokens
+                .iter()
+                .any(|token| matches!(token, Token::Word(word) if word == "###"))
+        );
+    }
+
+    #[test]
+    fn body_stops_at_terminator() {
+        assert_eq!(
+            body("POST /api\n\nhello world\n###"),
+            Some("hello world".to_string())
+        );
+    }
+
+    #[test]
+    fn body_without_terminator_keeps_all_lines() {
+        assert_eq!(
+            body("POST /api\n\nhello\nworld"),
+            Some("hello\nworld".to_string())
+        );
     }
 }

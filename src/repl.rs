@@ -2,9 +2,9 @@ use std::io::Error;
 use std::time::Duration;
 
 use crate::ast::{Command, HistoryCommand};
-use crate::execute::{ControlFlow, Executor, Output};
+use crate::executor::{ControlFlow, Executor, Output};
 use crate::lexer::Lexer;
-use crate::parse::Parser;
+use crate::parser::Parser;
 use crate::printer::Printer;
 use crate::reader::{ReadEvent, Reader};
 use crate::session::Session;
