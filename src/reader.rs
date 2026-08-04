@@ -1,8 +1,13 @@
-use std::{borrow::Cow, io::Error, mem};
+use std::{borrow::Cow, io::Error, mem, path::PathBuf};
 
-use reedline::{Prompt, PromptEditMode, PromptHistorySearch, Reedline, Signal};
+use reedline::{FileBackedHistory, Prompt, PromptEditMode, PromptHistorySearch, Reedline, Signal};
 
 const REQUEST_METHODS: [&str; 7] = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
+
+fn history_path() -> PathBuf {
+    let home = dirs::home_dir().expect("could not determine home directory");
+    home.join(".reqsh_history")
+}
 
 pub struct Reader {
     input_buffer: String,
@@ -25,11 +30,20 @@ impl Default for Reader {
 
 impl Reader {
     pub fn new() -> Self {
+        let editor = FileBackedHistory::with_file(1000, history_path())
+            .ok()
+            .map(|history| Reedline::create().with_history(Box::new(history)))
+            .unwrap_or_else(Reedline::create);
+
         Self {
             input_buffer: String::new(),
-            editor: Reedline::create(),
+            editor,
             prompt: ReqshPrompt { multiline: false },
         }
+    }
+
+    pub fn save_history(&mut self) {
+        let _ = self.editor.sync_history();
     }
 
     pub fn read(&mut self) -> Result<ReadEvent, Error> {

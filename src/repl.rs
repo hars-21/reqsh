@@ -23,7 +23,7 @@ impl Repl {
     pub fn new() -> Self {
         Self {
             reader: Reader::new(),
-            session: Session::new(),
+            session: Session::load(),
             executor: Executor::new(),
         }
     }
@@ -35,6 +35,8 @@ impl Repl {
                 ReadEvent::Interrupt => continue,
                 ReadEvent::Eof => break,
             };
+
+            self.reader.save_history();
 
             let tokens = match Lexer::lex(&input) {
                 Ok(tokens) => tokens,
@@ -72,8 +74,15 @@ impl Repl {
 
             match result.control_flow {
                 ControlFlow::Continue => {}
-                ControlFlow::Exit => break,
+                ControlFlow::Exit => {
+                    Printer::text("Bye!");
+                    break;
+                }
             }
+        }
+
+        if let Err(err) = self.session.save() {
+            Printer::error(err);
         }
 
         Ok(())

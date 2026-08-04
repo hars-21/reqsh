@@ -1,26 +1,60 @@
-use std::{collections::HashMap, time::Duration};
+use std::{
+    collections::HashMap,
+    fs,
+    path::PathBuf,
+    time::Duration,
+};
 
 use reqwest::{
     Url,
     header::{HeaderMap, HeaderName, HeaderValue},
 };
+use serde::{Deserialize, Serialize};
 
 use crate::{
     ast::{HeaderCommand, RequestSpec, SessionCommand, VariableCommand},
     http::{HttpRequest, to_reqwest_method},
 };
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Session {
     base_url: Option<String>,
     headers: HashMap<String, String>,
     variables: HashMap<String, String>,
+    #[serde(with = "duration_secs")]
     timeout: Option<Duration>,
 }
 
 impl Session {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn load() -> Self {
+        let contents = match fs::read_to_string(Self::state_file_path()) {
+            Ok(contents) => contents,
+            Err(_) => return Self::new(),
+        };
+
+        match serde_json::from_str(&contents) {
+            Ok(session) => session,
+            Err(e) => {
+                eprintln!("warning: failed to parse state file, starting fresh: {e}");
+                Self::new()
+            }
+        }
+    }
+
+    pub fn save(&self) -> Result<(), String> {
+        let json =
+            serde_json::to_string_pretty(self).map_err(|e| format!("failed to serialize state: {e}"))?;
+
+        fs::write(Self::state_file_path(), json).map_err(|e| format!("failed to write state file: {e}"))
+    }
+
+    fn state_file_path() -> PathBuf {
+        let home = dirs::home_dir().expect("could not determine home directory");
+        home.join(".reqsh_state.json")
     }
 
     pub fn apply_session(&mut self, command: SessionCommand) {
@@ -115,5 +149,26 @@ impl Session {
             headers,
             body,
         })
+    }
+}
+
+mod duration_secs {
+    use std::time::Duration;
+
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+    pub fn serialize<S>(duration: &Option<Duration>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        duration.map(|d| d.as_secs()).serialize(serializer)
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<Duration>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let secs = Option::<u64>::deserialize(deserializer)?;
+        Ok(secs.map(Duration::from_secs))
     }
 }
