@@ -1,199 +1,184 @@
-use std::iter::Peekable;
-use std::str::Chars;
+use std::fmt;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Word(String),
     String(String),
     Variable(String),
-    Colon,
-    Equals,
     Newline,
+    Body(String),
     End,
 }
 
-#[derive(Debug)]
 pub enum LexerError {
     UnterminatedString,
     InvalidVariable,
 }
 
-pub struct Lexer<'a> {
-    chars: Peekable<Chars<'a>>,
-}
+impl fmt::Display for LexerError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            LexerError::UnterminatedString => {
+                write!(f, "unterminated string: missing closing quote")
+            }
 
-impl<'a> Lexer<'a> {
-    pub fn new(input: &'a str) -> Self {
-        Self {
-            chars: input.chars().peekable(),
+            LexerError::InvalidVariable => {
+                write!(f, "invalid variable: expected format {{name}}")
+            }
         }
     }
+}
 
-    pub fn lex(input: &'a str) -> Result<Vec<Token>, LexerError> {
-        let mut lexer = Lexer::new(input);
+pub struct Lexer;
+
+impl Lexer {
+    pub fn lex(input: &str) -> Result<Vec<Token>, LexerError> {
         let mut tokens = Vec::new();
 
-        while let Some(token) = lexer.next()? {
-            tokens.push(token);
+        let mut lines = input.lines().peekable();
+
+        while let Some(line) = lines.next() {
+            // Empty line means body starts
+            if line.trim().is_empty() {
+                let body = lines.collect::<Vec<_>>().join("\n");
+
+                if !body.is_empty() {
+                    tokens.push(Token::Body(body));
+                }
+
+                break;
+            }
+
+            tokens.extend(Self::lex_line(line)?);
+            tokens.push(Token::Newline);
         }
+
+        tokens.push(Token::End);
 
         Ok(tokens)
     }
 
-    fn next(&mut self) -> Result<Option<Token>, LexerError> {
-        loop {
-            let ch = match self.chars.peek() {
-                Some(ch) => *ch,
-                None => return Ok(None),
-            };
+    fn lex_line(line: &str) -> Result<Vec<Token>, LexerError> {
+        let mut tokens = Vec::new();
 
-            match ch {
-                ' ' | '\t' | '\r' => {
-                    self.chars.next();
-                }
+        let chars: Vec<char> = line.chars().collect();
+        let mut current = String::new();
 
-                '\n' => {
-                    self.chars.next();
-                    return Ok(Some(Token::Newline));
-                }
+        let mut i = 0;
 
-                ':' => {
-                    self.chars.next();
-                    return Ok(Some(Token::Colon));
-                }
-
-                '=' => {
-                    self.chars.next();
-                    return Ok(Some(Token::Equals));
-                }
-
-                '"' => {
-                    return self.read_string();
-                }
-
-                '#' => {
-                    if self.read_end() {
-                        return Ok(Some(Token::End));
+        while i < chars.len() {
+            match chars[i] {
+                // Quoted string
+                '"' | '\'' => {
+                    if !current.is_empty() {
+                        tokens.push(Token::Word(current.clone()));
+                        current.clear();
                     }
 
-                    self.skip_comment();
-                }
+                    let quote = chars[i];
+                    i += 1;
 
-                '{' => {
-                    if self.peek_variable() {
-                        return self.read_variable();
+                    let mut value = String::new();
+
+                    while i < chars.len() {
+                        let c = chars[i];
+
+                        // Closing quote
+                        if c == quote {
+                            break;
+                        }
+
+                        // Escape handling
+                        if c == '\\' {
+                            i += 1;
+
+                            if i >= chars.len() {
+                                return Err(LexerError::UnterminatedString);
+                            }
+
+                            let escaped = match chars[i] {
+                                'n' => '\n',
+                                't' => '\t',
+                                '\\' => '\\',
+                                '"' => '"',
+                                '\'' => '\'',
+                                other => other,
+                            };
+
+                            value.push(escaped);
+                            i += 1;
+                            continue;
+                        }
+
+                        value.push(c);
+                        i += 1;
                     }
 
-                    return Ok(Some(self.read_word()));
+                    if i >= chars.len() {
+                        return Err(LexerError::UnterminatedString);
+                    }
+
+                    tokens.push(Token::String(value));
+
+                    i += 1;
                 }
 
-                _ => {
-                    return Ok(Some(self.read_word()));
+                // Variable {{name}}
+                '{' if i + 1 < chars.len() && chars[i + 1] == '{' => {
+                    if !current.is_empty() {
+                        tokens.push(Token::Word(current.clone()));
+                        current.clear();
+                    }
+
+                    i += 2;
+
+                    let mut name = String::new();
+
+                    while i + 1 < chars.len() && !(chars[i] == '}' && chars[i + 1] == '}') {
+                        name.push(chars[i]);
+                        i += 1;
+                    }
+
+                    if i + 1 >= chars.len() {
+                        return Err(LexerError::InvalidVariable);
+                    }
+
+                    let name = name.trim();
+
+                    // Validate variable name
+                    if name.is_empty()
+                        || !name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+                    {
+                        return Err(LexerError::InvalidVariable);
+                    }
+
+                    tokens.push(Token::Variable(name.to_string()));
+
+                    i += 2;
+                }
+
+                // Whitespace ends word
+                ' ' | '\t' => {
+                    if !current.is_empty() {
+                        tokens.push(Token::Word(current.clone()));
+                        current.clear();
+                    }
+
+                    i += 1;
+                }
+
+                // Everything else is part of word
+                c => {
+                    current.push(c);
+                    i += 1;
                 }
             }
         }
+
+        if !current.is_empty() {
+            tokens.push(Token::Word(current));
+        }
+
+        Ok(tokens)
     }
-
-    fn read_word(&mut self) -> Token {
-        let mut word = String::new();
-
-        while let Some(&ch) = self.chars.peek() {
-            if is_delimiter(ch) {
-                break;
-            }
-
-            word.push(ch);
-            self.chars.next();
-        }
-
-        Token::Word(word)
-    }
-
-    fn read_string(&mut self) -> Result<Option<Token>, LexerError> {
-        self.chars.next();
-
-        let mut value = String::new();
-
-        while let Some(ch) = self.chars.next() {
-            if ch == '"' {
-                return Ok(Some(Token::String(value)));
-            }
-
-            value.push(ch);
-        }
-
-        Err(LexerError::UnterminatedString)
-    }
-
-    fn read_end(&mut self) -> bool {
-        let mut clone = self.chars.clone();
-
-        if clone.next() != Some('#') {
-            return false;
-        }
-
-        if clone.next() != Some('#') {
-            return false;
-        }
-
-        if clone.next() != Some('#') {
-            return false;
-        }
-
-        self.chars.next();
-        self.chars.next();
-        self.chars.next();
-
-        true
-    }
-
-    fn skip_comment(&mut self) {
-        while let Some(ch) = self.chars.next() {
-            if ch == '\n' {
-                break;
-            }
-        }
-    }
-
-    fn peek_variable(&self) -> bool {
-        let mut clone = self.chars.clone();
-
-        clone.next() == Some('{') && clone.next() == Some('{')
-    }
-
-    fn read_variable(&mut self) -> Result<Option<Token>, LexerError> {
-        self.chars.next();
-        self.chars.next();
-
-        while matches!(self.chars.peek(), Some(' ' | '\t')) {
-            self.chars.next();
-        }
-
-        let mut name = String::new();
-
-        while let Some(&ch) = self.chars.peek() {
-            if ch == '}' {
-                break;
-            }
-
-            name.push(ch);
-            self.chars.next();
-        }
-
-        let name = name.trim().to_string();
-
-        if self.chars.next() != Some('}') {
-            return Err(LexerError::InvalidVariable);
-        }
-
-        if self.chars.next() != Some('}') {
-            return Err(LexerError::InvalidVariable);
-        }
-
-        Ok(Some(Token::Variable(name)))
-    }
-}
-
-fn is_delimiter(ch: char) -> bool {
-    matches!(ch, ' ' | '\t' | '\r' | '\n' | ':' | '=' | '"' | '#' | '{')
 }

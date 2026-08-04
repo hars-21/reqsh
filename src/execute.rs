@@ -1,9 +1,9 @@
-use reqwest::blocking::Response;
+use std::fmt;
 
 use crate::{
     ast::{Command, ShellCommand},
     help::help_text,
-    http::Client,
+    http::{Client, HttpResponse},
     session::Session,
 };
 
@@ -20,7 +20,7 @@ pub enum ControlFlow {
 pub enum Output {
     None,
     Text(String),
-    HttpResponse(Response),
+    HttpResponse(HttpResponse),
 }
 
 pub struct ExecutionResult {
@@ -34,6 +34,18 @@ pub enum ExecutionError {
     SessionError(String),
     VariableError(String),
 }
+
+impl fmt::Display for ExecutionError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ExecutionError::HttpError(message) => write!(f, "http: {}", message),
+            ExecutionError::SessionError(message) => write!(f, "session: {}", message),
+            ExecutionError::VariableError(message) => write!(f, "variable: {}", message),
+        }
+    }
+}
+
+impl std::error::Error for ExecutionError {}
 
 impl Executor {
     pub fn new() -> Self {
@@ -79,16 +91,15 @@ impl Executor {
                     .build_request(command)
                     .map_err(|e| ExecutionError::SessionError(e))?;
 
-                match self.client.send(request) {
-                    Ok(response) => Ok(ExecutionResult {
-                        control_flow: ControlFlow::Continue,
-                        output: Output::HttpResponse(response),
-                    }),
-                    Err(err) => Err(ExecutionError::HttpError(format!(
-                        "HTTP request failed: {}",
-                        err
-                    ))),
-                }
+                let response = self
+                    .client
+                    .send(request)
+                    .map_err(|e| ExecutionError::HttpError(format!("request failed: {}", e)))?;
+
+                Ok(ExecutionResult {
+                    control_flow: ControlFlow::Continue,
+                    output: Output::HttpResponse(response),
+                })
             }
         }
     }

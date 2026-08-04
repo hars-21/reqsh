@@ -1,7 +1,9 @@
 use std::io::Error;
 
-use crate::execute::{ControlFlow, Executor};
-use crate::parse::parse;
+use crate::execute::{ControlFlow, Executor, Output};
+use crate::lexer::Lexer;
+use crate::parse::Parser;
+use crate::printer::Printer;
 use crate::reader::{ReadEvent, Reader};
 use crate::session::Session;
 
@@ -34,28 +36,43 @@ impl Repl {
                 ReadEvent::Eof => break,
             };
 
-            let command = match parse(&input) {
-                Ok(command) => command,
-                Err(e) => {
-                    eprintln!("{}", e);
+            let tokens = match Lexer::lex(&input) {
+                Ok(tokens) => tokens,
+                Err(err) => {
+                    Printer::error(err);
                     continue;
                 }
             };
 
-            println!("Parsed command: {:?}", command);
-
-            match self.executor.execute(command, &mut self.session) {
-                Ok(result) => {
-                    println!("{:?}", result.output);
-
-                    if matches!(result.control_flow, ControlFlow::Exit) {
-                        break;
-                    }
-                }
-
+            let command = match Parser::parse(tokens) {
+                Ok(command) => command,
                 Err(err) => {
-                    eprintln!("Error: {:?}", err);
+                    Printer::error(err);
+                    continue;
                 }
+            };
+
+            let result = match self.executor.execute(command, &mut self.session) {
+                Ok(result) => result,
+                Err(err) => {
+                    Printer::error(err);
+                    continue;
+                }
+            };
+
+            match result.output {
+                Output::None => {}
+                Output::Text(text) => {
+                    Printer::text(&text);
+                }
+                Output::HttpResponse(response) => {
+                    Printer::http(&response);
+                }
+            }
+
+            match result.control_flow {
+                ControlFlow::Continue => {}
+                ControlFlow::Exit => break,
             }
         }
 

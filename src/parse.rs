@@ -1,338 +1,398 @@
-use std::time::Duration;
+use std::fmt;
 
-use crate::{
-    ast::{
-        Command, Header, HeaderCommand, HistoryCommand, Method, Query, RequestCommand, RequestSpec,
-        SessionCommand, ShellCommand, VariableCommand,
-    },
-    lexer::{Lexer, LexerError, Token},
-};
+use super::ast::*;
+use super::lexer::Token;
 
-pub fn parse(input: &str) -> Result<Command, String> {
-    let tokens = match Lexer::lex(input) {
-        Ok(tokens) => tokens,
-        Err(LexerError::UnterminatedString) => {
-            return Err("error: unterminated string".into());
-        }
-        Err(LexerError::InvalidVariable) => {
-            return Err("error: invalid variable".into());
-        }
-    };
-
-    if tokens.is_empty() {
-        return Err("empty input".into());
-    }
-
-    let command = word(&tokens, 0)?.to_ascii_lowercase();
-
-    match command.as_str() {
-        "get" | "post" | "put" | "patch" | "delete" | "head" | "options" => parse_request(&tokens),
-
-        "base" | "header" | "timeout" => parse_session(&tokens),
-
-        "var" => parse_variable(&tokens),
-
-        "history" => parse_history(&tokens),
-
-        "req" => parse_saved_request(&tokens),
-
-        "help" => Ok(Command::Shell(ShellCommand::Help)),
-
-        "version" => Ok(Command::Shell(ShellCommand::Version)),
-
-        "clear" => Ok(Command::Shell(ShellCommand::Clear)),
-
-        "exit" => Ok(Command::Shell(ShellCommand::Exit)),
-
-        other => Err(format!("unknown command: {}", other)),
-    }
+#[derive(Debug)]
+pub enum ParserError {
+    EmptyInput,
+    InvalidCommand,
+    MissingArgument,
+    InvalidMethod,
 }
 
-fn word(tokens: &[Token], index: usize) -> Result<&str, String> {
-    match tokens.get(index) {
-        Some(Token::Word(word)) => Ok(word),
-        _ => Err(format!("expected word at token {}", index)),
-    }
-}
-
-fn string(tokens: &[Token], index: usize) -> Result<String, String> {
-    match tokens.get(index) {
-        Some(Token::Word(value)) => Ok(value.clone()),
-        Some(Token::String(value)) => Ok(value.clone()),
-        Some(Token::Variable(value)) => Ok(format!("{{{{{}}}}}", value)),
-        _ => Err(format!("expected value at token {}", index)),
-    }
-}
-
-fn method(word: &str) -> Option<Method> {
-    match word.to_ascii_lowercase().as_str() {
-        "get" => Some(Method::Get),
-        "post" => Some(Method::Post),
-        "put" => Some(Method::Put),
-        "patch" => Some(Method::Patch),
-        "delete" => Some(Method::Delete),
-        "head" => Some(Method::Head),
-        "options" => Some(Method::Options),
-        _ => None,
-    }
-}
-
-fn parse_session(tokens: &[Token]) -> Result<Command, String> {
-    match word(tokens, 0)?.to_ascii_lowercase().as_str() {
-        "base" => {
-            let url = string(tokens, 1).map_err(|_| "usage: base <url>".to_string())?;
-
-            Ok(Command::Session(SessionCommand::Base(url)))
-        }
-
-        "timeout" => {
-            let duration = word(tokens, 1).map_err(|_| "usage: timeout <seconds>".to_string())?;
-
-            let seconds = duration
-                .parse::<u64>()
-                .map_err(|_| "invalid timeout".to_string())?;
-
-            Ok(Command::Session(SessionCommand::Timeout(
-                Duration::from_secs(seconds),
-            )))
-        }
-
-        "header" => {
-            let sub = word(tokens, 1)?.to_ascii_lowercase();
-
-            let cmd = match sub.as_str() {
-                "set" => HeaderCommand::Set {
-                    name: string(tokens, 2)?,
-                    value: string(tokens, 3)?,
-                },
-
-                "list" => HeaderCommand::List,
-
-                "remove" => HeaderCommand::Remove {
-                    name: string(tokens, 2)?,
-                },
-
-                "clear" => HeaderCommand::Clear,
-
-                _ => return Err(format!("unknown header command: {}", sub)),
-            };
-
-            Ok(Command::Session(SessionCommand::Header(cmd)))
-        }
-
-        _ => unreachable!(),
-    }
-}
-
-fn parse_variable(tokens: &[Token]) -> Result<Command, String> {
-    let sub = word(tokens, 1)?.to_ascii_lowercase();
-
-    let cmd = match sub.as_str() {
-        "set" => VariableCommand::Set {
-            name: string(tokens, 2)?,
-            value: string(tokens, 3)?,
-        },
-
-        "list" => VariableCommand::List,
-
-        "remove" => VariableCommand::Remove {
-            name: string(tokens, 2)?,
-        },
-
-        "clear" => VariableCommand::Clear,
-
-        _ => return Err(format!("unknown variable command: {}", sub)),
-    };
-
-    Ok(Command::Variable(cmd))
-}
-
-fn parse_history(tokens: &[Token]) -> Result<Command, String> {
-    if tokens[1] == Token::Newline {
-        return Ok(Command::History(HistoryCommand::List));
-    }
-
-    let sub = word(tokens, 1)?.to_ascii_lowercase();
-
-    let cmd = match sub.as_str() {
-        "list" => HistoryCommand::List,
-
-        "show" => HistoryCommand::Show {
-            index: parse_index(word(tokens, 2)?)?,
-        },
-
-        "remove" => HistoryCommand::Remove {
-            index: parse_index(word(tokens, 2)?)?,
-        },
-
-        "rerun" => HistoryCommand::Rerun {
-            index: parse_index(word(tokens, 2)?)?,
-        },
-
-        "clear" => HistoryCommand::Clear,
-
-        _ => return Err(format!("unknown history command: {}", sub)),
-    };
-
-    Ok(Command::History(cmd))
-}
-
-fn parse_saved_request(tokens: &[Token]) -> Result<Command, String> {
-    let sub = word(tokens, 1)?.to_ascii_lowercase();
-
-    let cmd = match sub.as_str() {
-        "save" => RequestCommand::Save {
-            name: string(tokens, 2)?,
-        },
-
-        "run" => RequestCommand::Run {
-            name: string(tokens, 2)?,
-        },
-
-        "list" => RequestCommand::List,
-
-        "show" => RequestCommand::Show {
-            name: string(tokens, 2)?,
-        },
-
-        "rename" => RequestCommand::Rename {
-            old_name: string(tokens, 2)?,
-            new_name: string(tokens, 3)?,
-        },
-
-        "remove" => RequestCommand::Remove {
-            name: string(tokens, 2)?,
-        },
-
-        "clear" => RequestCommand::Clear,
-
-        _ => return Err(format!("unknown request command: {}", sub)),
-    };
-
-    Ok(Command::Request(cmd))
-}
-
-fn parse_index(value: &str) -> Result<usize, String> {
-    value
-        .parse()
-        .map_err(|_| format!("invalid index: {}", value))
-}
-
-fn parse_request(tokens: &[Token]) -> Result<Command, String> {
-    let method = method(word(tokens, 0)?).ok_or_else(|| "invalid http method".to_string())?;
-
-    let path = string(tokens, 1)?;
-
-    let mut headers = Vec::new();
-    let mut queries = Vec::new();
-    let mut body = String::new();
-
-    let mut i = 2;
-    let mut in_body = false;
-
-    while i < tokens.len() {
-        match &tokens[i] {
-            Token::End => break,
-
-            Token::Newline => {
-                if in_body {
-                    body.push('\n');
-                } else {
-                    in_body = true;
-                }
-                i += 1;
+impl fmt::Display for ParserError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ParserError::EmptyInput => {
+                write!(f, "empty command")
             }
 
-            _ if in_body => {
-                body.push_str(&collect_until_newline(tokens, &mut i)?);
+            ParserError::InvalidCommand => {
+                write!(f, "invalid command")
             }
 
-            Token::Word(name) => match tokens.get(i + 1) {
-                Some(Token::Colon) => {
-                    let value = collect_value(tokens, &mut i, 2)?;
-                    headers.push(Header {
-                        name: name.clone(),
-                        value,
-                    });
+            ParserError::MissingArgument => {
+                write!(f, "missing required argument")
+            }
+
+            ParserError::InvalidMethod => {
+                write!(f, "invalid HTTP method")
+            }
+        }
+    }
+}
+
+impl std::error::Error for ParserError {}
+
+pub struct Parser;
+
+impl Parser {
+    pub fn parse(tokens: Vec<Token>) -> Result<Command, ParserError> {
+        let mut parser = ParserState {
+            tokens,
+            position: 0,
+        };
+
+        parser.parse_command()
+    }
+}
+
+struct ParserState {
+    tokens: Vec<Token>,
+    position: usize,
+}
+
+impl ParserState {
+    fn parse_command(&mut self) -> Result<Command, ParserError> {
+        let first = self.next_string().ok_or(ParserError::EmptyInput)?;
+
+        match first.as_str() {
+            // HTTP commands
+            "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD" | "OPTIONS" => {
+                self.parse_http(first)
+            }
+
+            // Session commands
+            "base" | "timeout" | "header" => self.parse_session(first),
+
+            // Variable commands
+            "var" => self.parse_variable(),
+
+            // Saved requests
+            "request" | "req" => self.parse_request_command(),
+
+            // History commands
+            "history" => self.parse_history(),
+
+            // Shell commands
+            "help" | "version" | "clear" | "exit" => self.parse_shell(first),
+
+            _ => Err(ParserError::InvalidCommand),
+        }
+    }
+
+    fn parse_http(&mut self, method: String) -> Result<Command, ParserError> {
+        let path = self.collect("").ok_or(ParserError::MissingArgument)?;
+
+        let method = Method::from_string(&method).ok_or(ParserError::InvalidMethod)?;
+
+        let mut headers = Vec::new();
+        let mut queries = Vec::new();
+        let mut body = String::new();
+
+        while let Some(token) = self.peek() {
+            match token {
+                Token::End => break,
+
+                Token::Newline => {
+                    self.advance();
                 }
 
-                Some(Token::Equals) => {
-                    let value = collect_value(tokens, &mut i, 2)?;
-                    queries.push(Query {
-                        name: name.clone(),
-                        value,
-                    });
+                Token::Body(content) => {
+                    body = content.clone();
+                    self.advance();
+
+                    break;
                 }
 
-                _ => {
-                    return Err(format!("unexpected token after '{}'", name));
+                Token::Word(word) => {
+                    if let Some(name) = word.strip_suffix(':') {
+                        let name = name.trim().to_string();
+                        let value = self.collect(" ").unwrap_or_default();
+
+                        headers.push(Header { name, value });
+                    } else if word.contains('=') {
+                        let value = self.collect("").unwrap_or_default();
+
+                        let Some((name, value)) = value.split_once('=') else {
+                            return Err(ParserError::InvalidCommand);
+                        };
+
+                        queries.push(Query {
+                            name: name.to_string(),
+                            value: value.to_string(),
+                        });
+                    } else {
+                        return Err(ParserError::InvalidCommand);
+                    }
                 }
+
+                _ => return Err(ParserError::InvalidCommand),
+            }
+        }
+
+        Ok(Command::Http(RequestSpec {
+            method,
+            path,
+            headers,
+            queries,
+            body,
+        }))
+    }
+
+    fn parse_session(&mut self, command: String) -> Result<Command, ParserError> {
+        match command.as_str() {
+            "base" => {
+                let url = self.next_string().ok_or(ParserError::MissingArgument)?;
+
+                Ok(Command::Session(SessionCommand::Base(url)))
+            }
+
+            "timeout" => {
+                let seconds = self
+                    .next_string()
+                    .ok_or(ParserError::MissingArgument)?
+                    .parse::<u64>()
+                    .map_err(|_| ParserError::MissingArgument)?;
+
+                Ok(Command::Session(SessionCommand::Timeout(
+                    std::time::Duration::from_secs(seconds),
+                )))
+            }
+
+            "header" => self.parse_header_command(),
+
+            _ => Err(ParserError::InvalidCommand),
+        }
+    }
+
+    fn parse_header_command(&mut self) -> Result<Command, ParserError> {
+        let action = self.next_string().ok_or(ParserError::MissingArgument)?;
+
+        let command = match action.as_str() {
+            "set" => {
+                let name = self.next_string().ok_or(ParserError::MissingArgument)?;
+
+                let value = self.collect(" ").ok_or(ParserError::MissingArgument)?;
+
+                HeaderCommand::Set { name, value }
+            }
+
+            "list" => HeaderCommand::List,
+
+            "clear" => HeaderCommand::Clear,
+
+            "remove" => {
+                let name = self.next_string().ok_or(ParserError::MissingArgument)?;
+
+                HeaderCommand::Remove { name }
+            }
+
+            _ => return Err(ParserError::InvalidCommand),
+        };
+
+        Ok(Command::Session(SessionCommand::Header(command)))
+    }
+
+    fn parse_variable(&mut self) -> Result<Command, ParserError> {
+        let action = self.next_string().ok_or(ParserError::MissingArgument)?;
+
+        match action.as_str() {
+            "set" => {
+                let name = self.next_string().ok_or(ParserError::MissingArgument)?;
+
+                let value = self.next_string().ok_or(ParserError::MissingArgument)?;
+
+                Ok(Command::Variable(VariableCommand::Set { name, value }))
+            }
+
+            "list" => Ok(Command::Variable(VariableCommand::List)),
+
+            "clear" => Ok(Command::Variable(VariableCommand::Clear)),
+
+            "remove" => {
+                let name = self.next_string().ok_or(ParserError::MissingArgument)?;
+
+                Ok(Command::Variable(VariableCommand::Remove { name }))
+            }
+
+            _ => Err(ParserError::InvalidCommand),
+        }
+    }
+
+    fn parse_request_command(&mut self) -> Result<Command, ParserError> {
+        let action = self.next_string().ok_or(ParserError::MissingArgument)?;
+
+        let command = match action.as_str() {
+            "save" => {
+                let name = self.next_string().ok_or(ParserError::MissingArgument)?;
+
+                RequestCommand::Save { name }
+            }
+
+            "run" => {
+                let name = self.next_string().ok_or(ParserError::MissingArgument)?;
+
+                RequestCommand::Run { name }
+            }
+
+            "show" => {
+                let name = self.next_string().ok_or(ParserError::MissingArgument)?;
+
+                RequestCommand::Show { name }
+            }
+
+            "remove" => {
+                let name = self.next_string().ok_or(ParserError::MissingArgument)?;
+
+                RequestCommand::Remove { name }
+            }
+
+            "rename" => {
+                let old_name = self.next_string().ok_or(ParserError::MissingArgument)?;
+
+                let new_name = self.next_string().ok_or(ParserError::MissingArgument)?;
+
+                RequestCommand::Rename { old_name, new_name }
+            }
+
+            "list" => RequestCommand::List,
+
+            "clear" => RequestCommand::Clear,
+
+            _ => return Err(ParserError::InvalidCommand),
+        };
+
+        Ok(Command::Request(command))
+    }
+
+    fn parse_history(&mut self) -> Result<Command, ParserError> {
+        let command = match self.next_string().as_deref() {
+            None | Some("list") => HistoryCommand::List,
+
+            Some("show") => HistoryCommand::Show {
+                index: self.parse_index()?,
             },
 
-            token => {
-                return Err(format!("unexpected token: {:?}", token));
+            Some("remove") => HistoryCommand::Remove {
+                index: self.parse_index()?,
+            },
+
+            Some("clear") => HistoryCommand::Clear,
+
+            Some("rerun") => HistoryCommand::Rerun {
+                index: self.parse_index()?,
+            },
+
+            _ => return Err(ParserError::InvalidCommand),
+        };
+
+        Ok(Command::History(command))
+    }
+
+    fn parse_index(&mut self) -> Result<usize, ParserError> {
+        self.next_string()
+            .ok_or(ParserError::MissingArgument)?
+            .parse::<usize>()
+            .map_err(|_| ParserError::MissingArgument)
+    }
+
+    fn parse_shell(&mut self, command: String) -> Result<Command, ParserError> {
+        let cmd = match command.as_str() {
+            "help" => ShellCommand::Help,
+
+            "version" => ShellCommand::Version,
+
+            "clear" => ShellCommand::Clear,
+
+            "exit" => ShellCommand::Exit,
+
+            _ => return Err(ParserError::InvalidCommand),
+        };
+
+        Ok(Command::Shell(cmd))
+    }
+
+    fn next_string(&mut self) -> Option<String> {
+        loop {
+            match self.advance()? {
+                Token::Word(value) | Token::String(value) => {
+                    return Some(value);
+                }
+
+                Token::Variable(name) => {
+                    return Some(format_variable(&name));
+                }
+
+                Token::Newline => continue,
+
+                _ => {}
             }
         }
     }
 
-    Ok(Command::Http(RequestSpec {
-        method,
-        path,
-        headers,
-        queries,
-        body,
-    }))
-}
+    fn collect(&mut self, separator: &str) -> Option<String> {
+        let mut parts = Vec::new();
 
-fn collect_until_newline(tokens: &[Token], index: &mut usize) -> Result<String, String> {
-    let mut text = String::new();
-
-    while *index < tokens.len() {
-        match &tokens[*index] {
-            Token::Newline | Token::End => break,
-
-            Token::Word(s) => {
-                if !text.is_empty() {
-                    text.push(' ');
-                }
-                text.push_str(s);
-            }
-
-            Token::String(s) => {
-                if !text.is_empty() {
-                    text.push(' ');
-                }
-                text.push_str(s);
-            }
-
-            Token::Variable(v) => {
-                if !text.is_empty() {
-                    text.push(' ');
+        while let Some(token) = self.peek() {
+            match token {
+                Token::Word(value) | Token::String(value) => {
+                    parts.push(value.clone());
+                    self.advance();
                 }
 
-                text.push_str("{{");
-                text.push_str(v);
-                text.push_str("}}");
-            }
+                Token::Variable(name) => {
+                    parts.push(format_variable(&name));
+                    self.advance();
+                }
 
-            Token::Colon => text.push(':'),
-            Token::Equals => text.push('='),
+                _ => break,
+            }
         }
 
-        *index += 1;
+        if parts.is_empty() {
+            None
+        } else {
+            Some(parts.join(separator))
+        }
     }
 
-    Ok(text)
+    fn peek(&self) -> Option<&Token> {
+        self.tokens.get(self.position)
+    }
+
+    fn advance(&mut self) -> Option<Token> {
+        let token = self.tokens.get(self.position)?.clone();
+
+        self.position += 1;
+
+        Some(token)
+    }
 }
 
-fn collect_value(tokens: &[Token], index: &mut usize, offset: usize) -> Result<String, String> {
-    *index += offset;
+impl Method {
+    fn from_string(value: &str) -> Option<Self> {
+        match value {
+            "GET" => Some(Method::Get),
 
-    let value = collect_until_newline(tokens, index)?;
+            "POST" => Some(Method::Post),
 
-    if matches!(tokens.get(*index), Some(Token::Newline)) {
-        *index += 1;
+            "PUT" => Some(Method::Put),
+
+            "DELETE" => Some(Method::Delete),
+
+            "PATCH" => Some(Method::Patch),
+
+            "HEAD" => Some(Method::Head),
+
+            "OPTIONS" => Some(Method::Options),
+
+            _ => None,
+        }
     }
+}
 
-    Ok(value)
+fn format_variable(name: &str) -> String {
+    format!("{{{{{name}}}}}")
 }
