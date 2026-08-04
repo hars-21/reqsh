@@ -28,6 +28,12 @@ impl Repl {
         }
     }
 
+    pub fn new_with_timeout(timeout: u64) -> Self {
+        let mut repl = Self::new();
+        repl.session.set_timeout(timeout);
+        repl
+    }
+
     pub fn run(&mut self) -> Result<(), Error> {
         loop {
             let input = match self.reader.read()? {

@@ -1,9 +1,4 @@
-use std::{
-    collections::HashMap,
-    fs,
-    path::PathBuf,
-    time::Duration,
-};
+use std::{collections::HashMap, fs, path::PathBuf, time::Duration};
 
 use reqwest::{
     Url,
@@ -46,15 +41,20 @@ impl Session {
     }
 
     pub fn save(&self) -> Result<(), String> {
-        let json =
-            serde_json::to_string_pretty(self).map_err(|e| format!("failed to serialize state: {e}"))?;
+        let json = serde_json::to_string_pretty(self)
+            .map_err(|e| format!("failed to serialize state: {e}"))?;
 
-        fs::write(Self::state_file_path(), json).map_err(|e| format!("failed to write state file: {e}"))
+        fs::write(Self::state_file_path(), json)
+            .map_err(|e| format!("failed to write state file: {e}"))
     }
 
     fn state_file_path() -> PathBuf {
         let home = dirs::home_dir().expect("could not determine home directory");
         home.join(".reqsh_state.json")
+    }
+
+    pub fn set_timeout(&mut self, timeout_secs: u64) {
+        self.timeout = Some(Duration::from_secs(timeout_secs));
     }
 
     pub fn apply_session(&mut self, command: SessionCommand) {

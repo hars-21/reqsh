@@ -18,7 +18,7 @@
 ## Milestones
 
 - [x] Introduce Repl
-- [ ] Move event loop
+- [x] Move event loop
 - [x] Introduce Reader
 - [x] Introduce Session
 - [x] Introduce Command AST
