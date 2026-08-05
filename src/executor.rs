@@ -75,9 +75,10 @@ impl Executor {
 
             Command::Shell(command) => Ok(self.execute_shell(command)),
 
-            Command::History(_) => {
-                todo!("history")
-            }
+            Command::History(_) => Ok(ExecutionResult {
+                control_flow: ControlFlow::Continue,
+                output: Output::None,
+            }),
 
             Command::Request(command) => self.execute_request(command, session),
 
