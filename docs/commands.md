@@ -74,6 +74,7 @@ HTTP methods are case-insensitive. You can also use absolute URLs without settin
 | `req rename` | `req rename <old> <new>` | Rename a saved request.         |
 | `req remove` | `req remove <name>`      | Delete a saved request by name. |
 | `req clear`  | `req clear`              | Delete all saved requests.      |
+| `req save-response` | `req save-response <path>` | Save the last response body to a file. |
 
 ### History
 

@@ -38,6 +38,8 @@ pub enum ExecutionError {
     RequestFailed(String),
     NoRequestToSave,
     SavedRequestNotFound(String),
+    NoResponseToSave,
+    WriteResponse { path: String, message: String },
 }
 
 impl fmt::Display for ExecutionError {
@@ -48,11 +50,17 @@ impl fmt::Display for ExecutionError {
             ExecutionError::NoRequestToSave => {
                 write!(
                     f,
-                    "no request to save\nrun a request first, then use `req save <name>`"
+                    "no request to save; run a request first, then use `req save <name>`"
                 )
             }
             ExecutionError::SavedRequestNotFound(name) => {
                 write!(f, "no saved request: {name}")
+            }
+            ExecutionError::NoResponseToSave => {
+                write!(f, "no response to save\nrun a request first")
+            }
+            ExecutionError::WriteResponse { path, message } => {
+                write!(f, "failed to write response to {path}: {message}")
             }
         }
     }
@@ -102,7 +110,7 @@ impl Executor {
     fn send_spec(
         &mut self,
         spec: RequestSpec,
-        session: &Session,
+        session: &mut Session,
     ) -> Result<ExecutionResult, ExecutionError> {
         let request = session
             .build_request(spec)
@@ -112,6 +120,8 @@ impl Executor {
             .client
             .send(request)
             .map_err(|e| ExecutionError::RequestFailed(e.to_string()))?;
+
+        *session.last_response() = Some(response.clone());
 
         Ok(ExecutionResult {
             control_flow: ControlFlow::Continue,

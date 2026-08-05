@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     ast::RequestSpec,
-    http::{HttpRequest, to_reqwest_method},
+    http::{HttpRequest, HttpResponse, to_reqwest_method},
 };
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -19,6 +19,8 @@ pub struct Session {
     variables: HashMap<String, String>,
     last_request: Option<RequestSpec>,
     saved_requests: HashMap<String, RequestSpec>,
+    #[serde(skip)]
+    last_response: Option<HttpResponse>,
     #[serde(with = "duration_secs")]
     timeout: Option<Duration>,
 }
@@ -70,6 +72,10 @@ impl Session {
 
     pub fn last_request(&mut self) -> &mut Option<RequestSpec> {
         &mut self.last_request
+    }
+
+    pub fn last_response(&mut self) -> &mut Option<HttpResponse> {
+        &mut self.last_response
     }
 
     pub fn saved_requests(&mut self) -> &mut HashMap<String, RequestSpec> {

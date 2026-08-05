@@ -61,6 +61,7 @@ pub enum RequestCommand {
     Rename { old_name: String, new_name: String },
     Remove { name: String },
     Clear,
+    SaveResponse { path: String },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

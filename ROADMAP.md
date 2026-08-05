@@ -12,7 +12,7 @@ Major focus on making requests work properly with full lifecycle support.
 - [ ] Improve request execution performance
 - [ ] Better UX for request-response flow
 - [x] Store request history during session
-- [ ] Save responses to files
+- [x] Save responses to files
 - [x] Basic request replay from history
 
 ### Fixes

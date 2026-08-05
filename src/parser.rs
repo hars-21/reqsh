@@ -253,6 +253,11 @@ impl ParserState {
 
             "clear" => RequestCommand::Clear,
 
+            "save-response" => {
+                let path = self.next_string().ok_or(ParserError::MissingArgument)?;
+                RequestCommand::SaveResponse { path }
+            }
+
             _ => return Err(ParserError::InvalidCommand),
         };
 
@@ -381,7 +386,7 @@ fn format_variable(name: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ast::{Command, HeaderCommand, Method, RequestSpec, SessionCommand};
+    use crate::ast::{Command, HeaderCommand, Method, RequestCommand, RequestSpec, SessionCommand};
     use crate::lexer::Lexer;
 
     fn parse(input: &str) -> Result<Command, ParserError> {
@@ -436,6 +441,15 @@ mod tests {
         };
         assert_eq!(name, "Authorization");
         assert_eq!(value, "Bearer abc");
+    }
+
+    #[test]
+    fn parses_req_save_response() {
+        let command = parse("req save-response out.json").unwrap();
+        let Command::Request(RequestCommand::SaveResponse { path }) = command else {
+            panic!("expected save response command");
+        };
+        assert_eq!(path, "out.json");
     }
 
     #[test]

@@ -69,7 +69,7 @@ pub fn to_reqwest_method(method: AstMethod) -> Method {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct HttpResponse {
     pub version: String,
     pub status: u16,
@@ -79,7 +79,7 @@ pub struct HttpResponse {
     pub duration: Duration,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Header {
     pub name: String,
     pub value: String,
