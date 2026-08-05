@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::{
     ast::{Command, RequestSpec},
-    http::{Client, HttpResponse},
+    http::{Client, HttpResponse, describe_request_error},
     session::Session,
 };
 
@@ -128,7 +128,7 @@ impl Executor {
         let response = self
             .client
             .send(request)
-            .map_err(|e| ExecutionError::RequestFailed(e.to_string()))?;
+            .map_err(|e| ExecutionError::RequestFailed(describe_request_error(&e)))?;
 
         *session.last_response() = Some(response.clone());
 
@@ -139,5 +139,31 @@ impl Executor {
                 response,
             },
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ast::{Command, Method, RequestSpec};
+
+    #[test]
+    fn connection_refused_is_described_gracefully() {
+        let mut session = Session::new();
+        let spec = RequestSpec {
+            method: Method::Get,
+            path: "http://127.0.0.1:1/".to_string(),
+            headers: Vec::new(),
+            queries: Vec::new(),
+            body: String::new(),
+        };
+
+        let result = Executor::new().execute(Command::Http(spec), &mut session);
+
+        assert!(matches!(
+            result,
+            Err(ExecutionError::RequestFailed(ref message))
+                if message.contains("connection refused")
+        ));
     }
 }

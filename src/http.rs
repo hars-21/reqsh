@@ -1,4 +1,6 @@
+use std::error::Error as StdError;
 use std::fmt;
+use std::io::{Error as IoError, ErrorKind};
 use std::time::{Duration, Instant};
 
 use reqwest::{
@@ -55,6 +57,36 @@ impl Client {
 
         HttpResponse::from_reqwest(response, start.elapsed())
     }
+}
+
+pub fn describe_request_error(error: &Error) -> String {
+    if error.is_timeout() {
+        "request timed out".to_string()
+    } else if error.is_connect() {
+        describe_connect_error(error)
+    } else {
+        error.to_string()
+    }
+}
+
+fn describe_connect_error(error: &Error) -> String {
+    let mut source = StdError::source(error);
+    while let Some(cause) = source {
+        if let Some(io) = cause.downcast_ref::<IoError>() {
+            if io.kind() == ErrorKind::ConnectionRefused {
+                return "connection refused".to_string();
+            }
+
+            let message = io.to_string().to_lowercase();
+            if message.contains("failed to lookup") || message.contains("name or service not known")
+            {
+                return "could not resolve host".to_string();
+            }
+        }
+        source = StdError::source(cause);
+    }
+
+    error.to_string()
 }
 
 pub fn to_reqwest_method(method: AstMethod) -> Method {

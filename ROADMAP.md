@@ -9,7 +9,7 @@ Major focus on making requests work properly with full lifecycle support.
 ### Features
 
 - [x] Full CRUD for requests (save, run, list, show, remove, rename, clear)
-- [ ] Improve request execution performance
+- [x] Improve request execution performance
 - [x] Better UX for request-response flow
 - [x] Store request history during session
 - [x] Save responses to files
@@ -18,7 +18,7 @@ Major focus on making requests work properly with full lifecycle support.
 ### Fixes
 
 - [x] Single client per session (the executor owns one client)
-- [ ] Handle connection errors gracefully
+- [x] Handle connection errors gracefully
 - [x] Better error messages when request fails
 
 ## v0.4.0 - Configuration & Personalization
