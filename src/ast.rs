@@ -62,6 +62,7 @@ pub enum RequestCommand {
     Remove { name: String },
     Clear,
     SaveResponse { path: String },
+    Rerun,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

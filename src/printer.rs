@@ -19,7 +19,9 @@ impl Printer {
     }
 
     /// Print an HTTP response.
-    pub fn http(response: &HttpResponse) {
+    pub fn http(request_line: &str, response: &HttpResponse) {
+        println!("{}", request_line.bold().cyan());
+        println!();
         println!("{}", Self::format_http(response));
     }
 

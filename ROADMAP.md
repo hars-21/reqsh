@@ -10,7 +10,7 @@ Major focus on making requests work properly with full lifecycle support.
 
 - [x] Full CRUD for requests (save, run, list, show, remove, rename, clear)
 - [ ] Improve request execution performance
-- [ ] Better UX for request-response flow
+- [x] Better UX for request-response flow
 - [x] Store request history during session
 - [x] Save responses to files
 - [x] Basic request replay from history

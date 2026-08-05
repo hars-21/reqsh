@@ -96,8 +96,9 @@ reqsh> header remove Authorization
 
 ## Response Handling
 
-After each request, reqsh displays:
+After each request, reqsh displays the request line (method + resolved URL) followed by the response details:
 
+- Request line, e.g., `GET https://api.example.com/users?page=1`
 - HTTP version (e.g., `HTTP/1.1`)
 - Status code and status text (color-coded: green for 2xx, yellow for 4xx, red for 5xx)
 - Response time in milliseconds
@@ -105,6 +106,7 @@ After each request, reqsh displays:
 - Pretty-printed JSON body (auto-detected from `Content-Type`) or raw text
 
 ```sh
+GET https://api.example.com/users?page=1
 HTTP/1.1 200 OK 142ms
 content-type: application/json
 date: Mon, 01 Jan 2024 00:00:00 GMT

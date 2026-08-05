@@ -69,6 +69,7 @@ HTTP methods are case-insensitive. You can also use absolute URLs without settin
 | ------------ | ------------------------ | ------------------------------- |
 | `req save`   | `req save <name>`        | Save the last executed request. |
 | `req run`    | `req run <name>`         | Execute a saved request.        |
+| `req rerun`  | `req rerun`              | Re-run the last executed request. |
 | `req list`   | `req list`               | List all saved requests.        |
 | `req show`   | `req show <name>`        | Show a saved request.           |
 | `req rename` | `req rename <old> <new>` | Rename a saved request.         |

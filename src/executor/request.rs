@@ -27,6 +27,17 @@ impl Executor {
                     .cloned()
                     .ok_or_else(|| ExecutionError::SavedRequestNotFound(name.clone()))?;
 
+                *session.last_request() = Some(spec.clone());
+
+                return self.send_spec(spec, session);
+            }
+
+            RequestCommand::Rerun => {
+                let spec = session
+                    .last_request()
+                    .clone()
+                    .ok_or(ExecutionError::NoRequestToReplay)?;
+
                 return self.send_spec(spec, session);
             }
 
@@ -40,9 +51,15 @@ impl Executor {
                     .collect::<Vec<_>>()
                     .join("\n");
 
+                let message = if lines.is_empty() {
+                    "no saved requests".to_string()
+                } else {
+                    lines
+                };
+
                 ExecutionResult {
                     control_flow: ControlFlow::Continue,
-                    output: Output::Text(lines),
+                    output: Output::Text(message),
                 }
             }
 
@@ -169,5 +186,14 @@ mod tests {
         );
 
         assert!(matches!(result, Err(ExecutionError::NoResponseToSave)));
+    }
+
+    #[test]
+    fn rerun_without_request_errors() {
+        let mut session = Session::new();
+
+        let result = Executor::new().execute(Command::Request(RequestCommand::Rerun), &mut session);
+
+        assert!(matches!(result, Err(ExecutionError::NoRequestToReplay)));
     }
 }

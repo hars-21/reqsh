@@ -51,9 +51,10 @@ reqsh> PATCH /users/1
 .....> ###
 ```
 
-The response includes the HTTP version, status code (color-coded), response time, all response headers and the body. JSON responses are automatically pretty-printed.
+The response includes the request line (method + resolved URL), the HTTP version, status code (color-coded), response time, all response headers and the body. JSON responses are automatically pretty-printed.
 
 ```sh
+PATCH https://api.example.com/users/1
 HTTP/1.1 200 OK 142ms
 content-type: application/json
 date: Mon, 01 Jan 2024 00:00:00 GMT

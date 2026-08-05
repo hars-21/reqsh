@@ -21,9 +21,15 @@ impl Executor {
                     .collect::<Vec<_>>()
                     .join("\n");
 
+                let message = if lines.is_empty() {
+                    "no variables set".to_string()
+                } else {
+                    lines
+                };
+
                 return ExecutionResult {
                     control_flow: ControlFlow::Continue,
-                    output: Output::Text(lines),
+                    output: Output::Text(message),
                 };
             }
 

@@ -91,8 +91,11 @@ impl Repl {
                     Output::Text(text) => {
                         Printer::text(&text);
                     }
-                    Output::HttpResponse(response) => {
-                        Printer::http(&response);
+                    Output::HttpResponse {
+                        request_line,
+                        response,
+                    } => {
+                        Printer::http(&request_line, &response);
                     }
                 }
 

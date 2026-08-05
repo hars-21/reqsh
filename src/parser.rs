@@ -258,6 +258,8 @@ impl ParserState {
                 RequestCommand::SaveResponse { path }
             }
 
+            "rerun" => RequestCommand::Rerun,
+
             _ => return Err(ParserError::InvalidCommand),
         };
 
@@ -450,6 +452,12 @@ mod tests {
             panic!("expected save response command");
         };
         assert_eq!(path, "out.json");
+    }
+
+    #[test]
+    fn parses_req_rerun() {
+        let command = parse("req rerun").unwrap();
+        assert!(matches!(command, Command::Request(RequestCommand::Rerun)));
     }
 
     #[test]

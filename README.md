@@ -17,6 +17,7 @@ Interactive HTTP shell for API workflows. Send requests, manage headers & variab
 - Variable interpolation with `{{name}}` syntax in paths, headers, query params and bodies
 - Global headers and variables (`header`, `var`)
 - Save, manage and run requests in-session (`req`)
+- Re-run the last executed request (`req rerun`)
 - Save the last response body to a file (`req save-response <path>`)
 - Command history with show, rerun and clear
 - Configurable request timeout

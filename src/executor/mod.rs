@@ -24,7 +24,10 @@ pub enum ControlFlow {
 pub enum Output {
     None,
     Text(String),
-    HttpResponse(HttpResponse),
+    HttpResponse {
+        request_line: String,
+        response: HttpResponse,
+    },
 }
 
 pub struct ExecutionResult {
@@ -39,6 +42,7 @@ pub enum ExecutionError {
     NoRequestToSave,
     SavedRequestNotFound(String),
     NoResponseToSave,
+    NoRequestToReplay,
     WriteResponse { path: String, message: String },
 }
 
@@ -57,7 +61,10 @@ impl fmt::Display for ExecutionError {
                 write!(f, "no saved request: {name}")
             }
             ExecutionError::NoResponseToSave => {
-                write!(f, "no response to save\nrun a request first")
+                write!(f, "no response to save; run a request first")
+            }
+            ExecutionError::NoRequestToReplay => {
+                write!(f, "no request to replay; run a request first")
             }
             ExecutionError::WriteResponse { path, message } => {
                 write!(f, "failed to write response to {path}: {message}")
@@ -116,6 +123,8 @@ impl Executor {
             .build_request(spec)
             .map_err(ExecutionError::InvalidRequest)?;
 
+        let request_line = format!("{} {}", request.method, request.url);
+
         let response = self
             .client
             .send(request)
@@ -125,7 +134,10 @@ impl Executor {
 
         Ok(ExecutionResult {
             control_flow: ControlFlow::Continue,
-            output: Output::HttpResponse(response),
+            output: Output::HttpResponse {
+                request_line,
+                response,
+            },
         })
     }
 }
