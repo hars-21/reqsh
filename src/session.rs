@@ -114,7 +114,9 @@ impl Session {
         let mut url = if path.starts_with("http://") || path.starts_with("https://") {
             Url::parse(&path).map_err(|e| e.to_string())?
         } else {
-            let base = self.base_url.as_ref().ok_or("base URL is not configured")?;
+            let base = self.base_url.as_ref().ok_or(
+                "base URL is not configured\nset one with `base <url>` or use an absolute URL",
+            )?;
 
             Url::parse(base)
                 .map_err(|e| e.to_string())?
