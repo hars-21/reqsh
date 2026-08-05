@@ -8,79 +8,128 @@ order: 4
 
 Beyond standard HTTP methods (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS`), reqsh provides specific REPL commands to manage your session.
 
+## Request Syntax
+
+Requests are built over multiple lines and ended with a `###` line, which also executes the request.
+
+```
+METHOD <path>
+<name>=<value>          query parameter
+<name>: <value>         request header
+<blank line>            body starts after an empty line
+<body>
+###                     end of request
+```
+
+```sh
+reqsh> GET /users?page=1
+.....> Accept: application/json
+.....> Authorization: Bearer <token>
+.....> ###
+```
+
+HTTP methods are case-insensitive. You can also use absolute URLs without setting a base URL.
+
 ## Command Reference
 
-| Command        | Usage                  | Description                                                                    |
-| -------------- | ---------------------- | ------------------------------------------------------------------------------ |
-| `base`         | `base <url>`           | Set the global base URL for the session.                                       |
-| `header`       | `header <key> <value>` | Add a persistent header applied to all requests.                               |
-| `set`          | `set <name> <value>`   | Store a variable for interpolation.                                            |
-| `unset`        | `unset <name>`         | Remove a variable.                                                             |
-| `unset header` | `unset header <key>`   | Remove a global header.                                                        |
-| `save`         | `save <name>`          | Save the last executed request to memory.                                      |
-| `remove`       | `remove <name>`        | Delete a saved request by name.                                                |
-| `rename`       | `rename <old> <new>`   | Rename a saved request                                                         |
-| `run`          | `run <name>`           | Execute a saved request.                                                       |
-| `vars`         | `vars`                 | List all session variables.                                                    |
-| `headers`      | `headers`              | List all global headers.                                                       |
-| `requests`     | `requests`             | List all saved requests.                                                       |
-| `history`      | `history`              | View the numbered history of past commands.                                    |
-| `rerun`        | `rerun <id>`           | Instantly re-execute a request from history.                                   |
-| `timeout`      | `timeout <seconds>`    | Set the request timeout for the session.                                       |
-| `clear`        | `clear`                | Reset the entire session state (base URL, headers, variables, saved requests). |
-| `help`         | `help`                 | Display syntax and command documentation.                                      |
-| `exit`         | `exit`                 | Terminate the shell session.                                                   |
+### Session
 
-## Session Management
+| Command   | Usage               | Description                               |
+| --------- | ------------------- | ----------------------------------------- |
+| `base`    | `base <url>`        | Set the global base URL for the session.  |
+| `timeout` | `timeout <seconds>` | Set the request timeout for the session.  |
+| `clear`   | `clear`             | Clear the terminal screen.                |
+| `version` | `version`           | Print the reqsh version.                  |
+| `help`    | `help`              | Display syntax and command documentation. |
+| `exit`    | `exit`              | Terminate the shell session.              |
 
-### Save and Run
+### Headers
+
+| Command         | Usage                      | Description                    |
+| --------------- | -------------------------- | ------------------------------ |
+| `header set`    | `header set <key> <value>` | Add a persistent header.       |
+| `header list`   | `header list`              | List all persistent headers.   |
+| `header remove` | `header remove <key>`      | Remove a persistent header.    |
+| `header clear`  | `header clear`             | Remove all persistent headers. |
+
+### Variables
+
+| Command      | Usage                    | Description           |
+| ------------ | ------------------------ | --------------------- |
+| `var set`    | `var set <name> <value>` | Store a variable.     |
+| `var list`   | `var list`               | List all variables.   |
+| `var remove` | `var remove <name>`      | Remove a variable.    |
+| `var clear`  | `var clear`              | Remove all variables. |
+
+### Saved Requests
+
+`request` is an alias for `req`.
+
+| Command      | Usage                    | Description                     |
+| ------------ | ------------------------ | ------------------------------- |
+| `req save`   | `req save <name>`        | Save the last executed request. |
+| `req run`    | `req run <name>`         | Execute a saved request.        |
+| `req list`   | `req list`               | List all saved requests.        |
+| `req show`   | `req show <name>`        | Show a saved request.           |
+| `req rename` | `req rename <old> <new>` | Rename a saved request.         |
+| `req remove` | `req remove <name>`      | Delete a saved request by name. |
+| `req clear`  | `req clear`              | Delete all saved requests.      |
+
+### History
+
+| Command         | Usage                | Description                                 |
+| --------------- | -------------------- | ------------------------------------------- |
+| `history`       | `history` / `list`   | View the numbered history of past commands. |
+| `history show`  | `history show <id>`  | View a single command from history.         |
+| `history rerun` | `history rerun <id>` | Re-execute a command from history.          |
+| `history clear` | `history clear`      | Clear the command history.                  |
+
+## Save and Run
 
 Save any request after executing it, then replay it instantly.
 
 ```sh
 reqsh> GET /users/{{id}}
-.....> ::send
-reqsh> save get-user
-saved
-reqsh> run get-user
+.....> ###
+reqsh> req save get-user
+saved request: get-user
+reqsh> req list
+get-user (GET) /users/{{id}}
+reqsh> req run get-user
 ```
 
-### History
+## History
 
-View all commands executed in the current session.
+View all commands executed in the session.
 
 ```sh
 reqsh> history
-1: base https://api.example.com
-2: header Authorization Bearer sk_test
-3: GET /users
+   1: base https://api.example.com
+   2: header set Authorization Bearer sk_test
+   3: GET /users
 ```
 
-### Rerun
-
-Re-execute a command from history by its ID.
+Rerun a command from history by its ID.
 
 ```sh
-reqsh> rerun 3
+reqsh> history rerun 3
 ```
 
 ## Variables
 
-### Set and Use
-
 Store values and reference them with `{{name}}` syntax.
 
 ```sh
-reqsh> set token eyJhbGciOiJIUzI1NiJ9
+reqsh> var set token eyJhbGciOiJIUzI1NiJ9
 reqsh> GET /users/{{token}}
-.....> ::send
+.....> ###
 ```
 
-### List and Remove
+List and remove variables.
 
 ```sh
-reqsh> vars
-reqsh> unset token
+reqsh> var list
+reqsh> var remove token
 ```
 
 ## Timeout
@@ -89,16 +138,6 @@ Set a request timeout for all requests in the session.
 
 ```sh
 reqsh> timeout 10
-Request timeout set to 10 seconds
-```
-
-## Clear
-
-Reset the entire session, base URL, headers, variables and saved requests.
-
-```sh
-reqsh> clear
-Session cleared
 ```
 
 ## Help

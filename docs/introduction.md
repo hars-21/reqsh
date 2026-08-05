@@ -32,26 +32,26 @@ reqsh> base https://api.example.com
 
 ### 4. Send a request
 
-Type the HTTP method and the relative path. Then execute it using the special `::send` command.
+Type the HTTP method and the relative path. End the request with a `###` line to execute it.
 
 ```sh
 reqsh> GET /users
-.....> ::send
+.....> ###
 ```
 
 ## Sending Requests
 
-The shell supports building complex requests step-by-step. Start with the method and path. HTTP methods are case-insensitive - `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS` are all supported. You can also use absolute URLs, no base URL required. Add headers on the following lines. Leave a blank line to start writing the body.
+The shell supports building complex requests step-by-step. Start with the method and path. HTTP methods are case-insensitive - `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS` are all supported. You can also use absolute URLs, no base URL required. Add query params with `name=value` lines and headers with `Name: value` lines. Leave a blank line to start writing the body. Terminate the request with a line containing `###`.
 
 ```sh
 reqsh> PATCH /users/1
 .....> Content-Type: application/json
 .....>
 .....> {"name": "Alice"}
-.....> ::send
+.....> ###
 ```
 
-The response includes the HTTP version, status code (color-coded), response time, all response headers and the body. JSON responses are automatically pretty-printed with colored syntax.
+The response includes the HTTP version, status code (color-coded), response time, all response headers and the body. JSON responses are automatically pretty-printed.
 
 ```sh
 HTTP/1.1 200 OK 142ms
@@ -68,25 +68,25 @@ Session state (base URL, headers, variables, saved requests) is persisted automa
 
 ## Variables
 
-Store values with `set` and reference them anywhere in your request using `{{name}}`. Variables are interpolated at request time.
+Store values with `var set` and reference them anywhere in your request using `{{name}}`. Variables are interpolated at request time.
 
 ```sh
-reqsh> set token eyJhbGciOiJIUzI1NiJ9
-reqsh> set host api.example.com
+reqsh> var set token eyJhbGciOiJIUzI1NiJ9
+reqsh> var set host api.example.com
 reqsh> GET /users/{{token}}
 .....> Authorization: Bearer {{token}}
-.....> ::send
+.....> ###
 ```
 
 ## Query Parameters
 
-Add query parameters with `param:` lines. Values are URL-encoded automatically.
+Add query parameters with `name=value` lines. Values are URL-encoded automatically.
 
 ```sh
 reqsh> GET /users
-.....> param: page=1
-.....> param: limit=20
-.....> ::send
+.....> page=1
+.....> limit=20
+.....> ###
 ```
 
 ## Timeout
@@ -95,7 +95,6 @@ Set a default timeout for all requests in a session.
 
 ```sh
 reqsh> timeout 10
-Request timeout set to 10 seconds
 ```
 
 You can also set a timeout when starting the REPL:
@@ -106,11 +105,13 @@ reqsh --timeout 30
 
 ## Clear Session
 
-Reset the entire session state — base URL, headers, variables, and saved requests.
+`clear` clears the terminal screen. To reset specific session state, use the scoped clear commands:
 
 ```sh
-reqsh> clear
-Session cleared
+reqsh> header clear
+reqsh> var clear
+reqsh> req clear
+reqsh> history clear
 ```
 
 ## Session Persistence
@@ -123,8 +124,8 @@ Save a request to session memory after executing it, then run it again instantly
 
 ```sh
 reqsh> GET /users/{{id}}
-.....> ::send
-reqsh> save get-user
-saved
-reqsh> run get-user
+.....> ###
+reqsh> req save get-user
+saved request: get-user
+reqsh> req run get-user
 ```

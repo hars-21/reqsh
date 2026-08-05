@@ -8,18 +8,18 @@ Major focus on making requests work properly with full lifecycle support.
 
 ### Features
 
-- [ ] Full CRUD for requests and responses (save, load, list, delete)
+- [x] Full CRUD for requests (save, run, list, show, remove, rename, clear)
 - [ ] Improve request execution performance
 - [ ] Better UX for request-response flow
-- [ ] Store request history during session
+- [x] Store request history during session
 - [ ] Save responses to files
-- [ ] Basic request replay from history
+- [x] Basic request replay from history
 
 ### Fixes
 
-- [ ] Single client per session (right now it builds separate client for each request, need to fix this)
+- [x] Single client per session (the executor owns one client)
 - [ ] Handle connection errors gracefully
-- [ ] Better error messages when request fails
+- [x] Better error messages when request fails
 
 ## v0.4.0 - Configuration & Personalization
 

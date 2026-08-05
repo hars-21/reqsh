@@ -10,12 +10,12 @@ Variables let you store reusable values and interpolate them into requests using
 
 ## Setting Variables
 
-Use the `set` command to store a value.
+Use the `var set` command to store a value.
 
 ```sh
-reqsh> set token eyJhbGciOiJIUzI1NiJ9
-reqsh> set base_url https://api.example.com
-reqsh> set user_id 42
+reqsh> var set token eyJhbGciOiJIUzI1NiJ9
+reqsh> var set base_url https://api.example.com
+reqsh> var set user_id 42
 ```
 
 ## Using Variables
@@ -25,7 +25,7 @@ Reference variables anywhere in your request using double curly braces.
 ```sh
 reqsh> GET /users/{{user_id}}
 .....> Authorization: Bearer {{token}}
-.....> ::send
+.....> ###
 ```
 
 Variables work in:
@@ -33,14 +33,14 @@ Variables work in:
 - **Paths**: `GET /users/{{user_id}}`
 - **Headers**: `Authorization: Bearer {{token}}`
 - **Bodies**: `{"id": "{{user_id}}"}`
-- **Query params**: `param: page={{page}}`
+- **Query params**: `page={{page}}`
 
 ## Listing Variables
 
 View all stored variables in the current session.
 
 ```sh
-reqsh> vars
+reqsh> var list
 token = eyJhbGciOiJIUzI1NiJ9
 base_url = https://api.example.com
 user_id = 42
@@ -51,16 +51,16 @@ user_id = 42
 Remove a variable when it's no longer needed.
 
 ```sh
-reqsh> unset token
+reqsh> var remove token
 ```
 
 ## Example Workflow
 
 ```sh
-reqsh> set token eyJhbGciOiJIUzI1NiJ9
-reqsh> set api https://api.example.com
+reqsh> var set token eyJhbGciOiJIUzI1NiJ9
+reqsh> var set api https://api.example.com
 reqsh> GET {{api}}/users/{{token}}
-.....> ::send
+.....> ###
 HTTP/1.1 200 OK 142ms
 content-type: application/json
 

@@ -27,34 +27,34 @@ reqsh> base https://api.example.com
 
 ## Making Requests
 
-Type the HTTP method followed by the path. Use `::send` to execute.
+Type the HTTP method followed by the path, then terminate the request with a `###` line to execute it.
 
 ```sh
 reqsh> GET /users
-.....> ::send
+.....> ###
 ```
 
 ### Request Body
 
-Leave a blank line after headers to start writing the body.
+Leave a blank line after headers to start writing the body. End the request with `###`.
 
 ```sh
 reqsh> POST /users
 .....> Content-Type: application/json
 .....>
 .....> {"name": "Alice", "email": "alice@example.com"}
-.....> ::send
+.....> ###
 ```
 
 ### Query Parameters
 
-Add query parameters with `param:` lines.
+Add query parameters with `name=value` lines.
 
 ```sh
 reqsh> GET /users
-.....> param: page=1
-.....> param: limit=20
-.....> ::send
+.....> page=1
+.....> limit=20
+.....> ###
 ```
 
 ### Absolute URLs
@@ -63,7 +63,7 @@ You can use absolute URLs directly without setting a base URL.
 
 ```sh
 reqsh> GET https://api.github.com/users/hars-21
-.....> ::send
+.....> ###
 ```
 
 ## Headers
@@ -73,25 +73,25 @@ reqsh> GET https://api.github.com/users/hars-21
 Add persistent headers that apply to all requests in the session.
 
 ```sh
-reqsh> header Authorization Bearer sk_test_123
-reqsh> header Content-Type application/json
+reqsh> header set Authorization Bearer sk_test_123
+reqsh> header set Content-Type application/json
 ```
 
 ### Per-Request Headers
 
-Add headers to individual requests.
+Add headers to individual requests. They override global headers with the same name.
 
 ```sh
 reqsh> GET /users
 .....> X-Custom-Header: value
-.....> ::send
+.....> ###
 ```
 
 ### View and Remove Headers
 
 ```sh
-reqsh> headers
-reqsh> unset header Authorization
+reqsh> header list
+reqsh> header remove Authorization
 ```
 
 ## Response Handling

@@ -10,16 +10,16 @@ Interactive HTTP shell for API workflows. Send requests, manage headers & variab
 
 ## Features
 
-- Interactive REPL with tab completion
+- Interactive REPL with multi-line request editing
 - Send GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS requests (case-insensitive)
-- Multi-line request input for headers and body
-- Persistent session state across restarts
-- Variable interpolation with `{{name}}` syntax
-- Query parameter support with `param: key=value`
-- Save, manage and run requests in-session
-- JSON response pretty-printing with colored output
-- Command history and rerun by index
+- Multi-line request input with query params, headers, body and `###` terminator
+- Persistent session state across restarts (`~/.reqsh_state.json`)
+- Variable interpolation with `{{name}}` syntax in paths, headers, query params and bodies
+- Global headers and variables (`header`, `var`)
+- Save, manage and run requests in-session (`req`)
+- Command history with show, rerun and clear
 - Configurable request timeout
+- JSON response pretty-printing with colored output
 
 ## Quick Start
 
@@ -36,11 +36,13 @@ Or download a binary from the [releases page](https://github.com/hars-21/reqsh/r
 ```bash
 reqsh> base https://api.example.com
 reqsh> GET /users
+.....> ###
+
 reqsh> POST /users
 .....> Content-Type: application/json
 .....>
 .....> {"name": "john"}
-.....> ::send
+.....> ###
 ```
 
 For full documentation on commands, variables and usage see the [docs](docs/introduction.md).
