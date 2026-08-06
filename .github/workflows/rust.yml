@@ -10,17 +10,46 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-
+  check:
+    name: Check (fmt + clippy)
     runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Check formatting
+      run: cargo fmt --all -- --check
+    - name: Run clippy
+      run: cargo clippy -- -D warnings
+
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
     - uses: actions/checkout@v4
     - name: Build
       run: cargo build --verbose
-    - name: Check formatting
-      run: cargo fmt --all -- --check
-    - name: Run clippy
-      run: cargo clippy -- -D warnings
     - name: Run tests
       run: cargo test --verbose
+
+  linux-arm64:
+    name: Build (aarch64-unknown-linux-gnu)
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: aarch64-unknown-linux-gnu
+    - name: Install cross-compilation tools
+      uses: taiki-e/setup-cross-toolchain-action@v1
+      with:
+        target: aarch64-unknown-linux-gnu
+    - name: Build
+      run: cargo build --release --target aarch64-unknown-linux-gnu

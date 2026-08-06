@@ -27,10 +27,16 @@ jobs:
             target: aarch64-apple-darwin
             archive: tar.gz
 
-          - name: linux
+          - name: linux-x64
             os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             archive: tar.gz
+
+          - name: linux-arm64
+            os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            archive: tar.gz
+            cross: true
 
           - name: windows
             os: windows-latest
@@ -45,6 +51,12 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
+
+      - name: Install Cross Toolchain
+        if: matrix.cross
+        uses: taiki-e/setup-cross-toolchain-action@v1
+        with:
+          target: ${{ matrix.target }}
 
       - name: Build
         run: cargo build --release --target ${{ matrix.target }}

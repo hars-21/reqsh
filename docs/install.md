@@ -18,7 +18,7 @@ curl -fsSL https://reqsh.dev/install.sh | sh
 
 ## Prebuilt Binary
 
-Download the latest binary for your platform from the [GitHub Releases](https://github.com/hars-21/reqsh/releases) page. Available for macOS (Intel & Silicon), Linux (x86_64) and Windows (x86_64).
+Download the latest binary for your platform from the [GitHub Releases](https://github.com/hars-21/reqsh/releases) page. Available for macOS (Intel & Silicon), Linux (x86_64 & ARM64) and Windows (x86_64).
 
 1. Download the binary for your platform.
 2. Move it to a directory included in your system PATH.
