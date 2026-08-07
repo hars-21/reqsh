@@ -31,7 +31,20 @@ Interactive HTTP shell for API workflows. Send requests, manage headers & variab
 curl -fsSL https://reqsh.dev/install.sh | sh
 ```
 
-Or download a binary from the [releases page](https://github.com/hars-21/reqsh/releases/latest) or [build from source](docs/install.md).
+Or via Homebrew:
+
+```bash
+brew tap hars-21/tap
+brew install reqsh
+```
+
+Or via Cargo:
+
+```bash
+cargo install reqsh
+```
+
+You can also download a binary from the [releases page](https://github.com/hars-21/reqsh/releases/latest) or [build from source](docs/install.md).
 
 ### Usage
 

@@ -1,12 +1,31 @@
 ---
 title: Installation
-description: Install reqsh via script, prebuilt binary or build from source.
+description: Install reqsh via Homebrew, Cargo, script, prebuilt binary or build from source.
 order: 2
 ---
 
 # Installation
 
 Get reqsh running on your system in seconds. Choose the method that best fits your workflow.
+
+## Homebrew
+
+Available on macOS and Linux. Requires [Homebrew](https://brew.sh).
+
+```sh
+brew tap hars-21/tap
+brew install reqsh
+```
+
+> Linux note: Homebrew and Cargo build reqsh from source. On Linux you'll need a C build toolchain and OpenSSL dev headers - `build-essential pkg-config libssl-dev` on Debian/Ubuntu, or `gcc openssl-devel` on Fedora. macOS users only need the Xcode Command Line Tools.
+
+## Cargo
+
+Install from [crates.io](https://crates.io/crates/reqsh) using the [Rust toolchain](https://rustup.rs).
+
+```sh
+cargo install reqsh
+```
 
 ## Install Script
 
