@@ -60,9 +60,9 @@ commit_preprocessors = [
   { pattern = '\((\w+\s)?#([0-9]+)\)', replace = "([#${2}](<REPO>/issues/${2}))" },
   { pattern = '^v\d+\.\d+\.\d+:\s*', replace = "" },
   { pattern = '^bugfix:\s*', replace = "fix: " },
-  { pattern = '^Merge pull request.*', replace = "" },
 ]
 commit_parsers = [
+  { message = "^Merge pull request", skip = true },
   { message = "^chore\\(release\\):", skip = true },
   { message = "^ci:", skip = true },
   { message = "^chore:", skip = true },
