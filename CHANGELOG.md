@@ -2,6 +2,12 @@
 
 Every release of reqsh, from the latest features to the smallest fixes.
 
+## [v0.3.1](https://github.com/hars-21/reqsh/compare/v0.3.0..v0.3.1) - 2026-08-07
+
+### Bug Fixes
+
+- Update JSON response colored output
+
 ## [v0.3.0](https://github.com/hars-21/reqsh/compare/v0.2.1..v0.3.0) - 2026-08-07
 
 ### Features
