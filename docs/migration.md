@@ -1,0 +1,46 @@
+---
+title: Migration Guide
+description: Breaking changes in v0.3.0 and how to migrate from earlier versions.
+order: 6
+---
+
+# Migrating to v0.3.0
+
+v0.3.0 is a major refactor of reqsh's internals (new lexer, parser and AST, split executor, reworked session management) and introduces several **breaking command changes**. The old `header <key> <value>`, `unset`, `vars`, `headers` and bare `save`/`run`/`requests` commands no longer exist, every session command now has an explicit, scoped form.
+
+## Command Changes
+
+| Old (v0.2.x)           | New (v0.3.0)               |
+| ---------------------- | -------------------------- |
+| `header <key> <value>` | `header set <key> <value>` |
+| `headers`              | `header list`              |
+| `unset header <key>`   | `header remove <key>`      |
+| `vars`                 | `var list`                 |
+| `unset <name>`         | `var remove <name>`        |
+| `requests`             | `req list`                 |
+| `save <name>`          | `req save <name>`          |
+| `run <name>`           | `req run <name>`           |
+| `rename <old> <new>`   | `req rename <old> <new>`   |
+| `rerun <id>`           | `history rerun <id>`       |
+| `clear`                | `clear` (terminal only)    |
+
+## Behaviour Changes
+
+- **`clear` no longer resets session state.** It only clears the terminal screen. Use the scoped commands instead: `header clear`, `var clear`, `req clear`, `history clear`.
+- **History commands are namespaced** under `history`: `history` (or `history list`), `history show <id>`, `history rerun <id>`, `history clear`.
+- **The response now prints the request line** (method + resolved URL) above the response headers.
+- **Connection errors are friendlier.** Failures like "connection refused", "could not resolve host" and "request timed out" are reported as concise messages instead of raw transport errors.
+- **`base` validates the URL immediately.** Setting an invalid base URL now fails with an error instead of waiting until the first request.
+
+## New in v0.3.0
+
+- `req rerun` - re-run the last executed request.
+- `req show <name>` - view a saved request's definition.
+- `req clear` - remove all saved requests.
+- `req save-response <path>` - save the last response body to a file.
+- `history show <id>` and `history clear`.
+- `exit` command to leave the shell.
+
+## State File
+
+The persisted session state (`~/.reqsh_state.json`) layout changed. Old state files are not migrated. Start a fresh session after upgrading.

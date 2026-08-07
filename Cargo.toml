@@ -1,13 +1,20 @@
 [package]
 name = "reqsh"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2024"
+rust-version = "1.93"
+
 license = "MIT"
 authors = ["Harshil Gupta"]
 description = "Interactive HTTP shell for API workflows"
+homepage = "https://reqsh.dev"
 repository = "https://github.com/hars-21/reqsh"
-readme = "README.md"
+documentation = "https://docs.rs/reqsh"
+
 keywords = ["http", "repl", "cli", "api", "terminal"]
+categories = ["command-line-utilities", "web-programming::http-client"]
+
+readme = "README.md"
 
 [dependencies]
 colored = "3.1.1"
