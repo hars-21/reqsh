@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use colored::Colorize;
-use serde_json::Value;
+use json_color::Colorizer;
 
 use crate::http::HttpResponse;
 
@@ -65,11 +65,8 @@ impl Printer {
 
         if !response.body.is_empty() {
             if is_json {
-                match serde_json::from_str::<Value>(&response.body) {
-                    Ok(json) => match serde_json::to_string_pretty(&json) {
-                        Ok(pretty) => output.push_str(&pretty),
-                        Err(_) => output.push_str(&response.body),
-                    },
+                match Colorizer::arbitrary().colorize_json_str(&response.body) {
+                    Ok(colored) => output.push_str(&colored),
                     Err(_) => output.push_str(&response.body),
                 }
             } else {

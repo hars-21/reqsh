@@ -108,7 +108,7 @@ impl Prompt for ReqshPrompt {
     }
 
     fn render_prompt_multiline_indicator(&self) -> Cow<'_, str> {
-        ".....>".into()
+        ".....> ".into()
     }
 
     fn render_prompt_history_search_indicator(&self, _: PromptHistorySearch) -> Cow<'_, str> {
