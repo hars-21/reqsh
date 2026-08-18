@@ -1,10 +1,11 @@
-![reqsh | Interactive HTTP shell](assets/banner.png)
+![reqsh | Interactive HTTP shell](assets/readme-banner.png)
 
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)](#)
 [![Rust](https://img.shields.io/badge/rust-v1.93.0-orange)](https://www.rust-lang.org)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-under%20development-yellow)]()
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+[![GitHub Stars](https://img.shields.io/github/stars/hars-21/reqsh?style=social)](https://github.com/hars-21/reqsh)
 
 Interactive HTTP shell for API workflows. Send requests, manage headers & variables and rerun past commands from a terminal REPL.
 
@@ -45,6 +46,10 @@ cargo install reqsh
 ```
 
 You can also download a binary from the [releases page](https://github.com/hars-21/reqsh/releases/latest) or [build from source](docs/install.md).
+
+### Demo
+
+<video src="assets/demo.mp4" controls width="800"></video>
 
 ### Usage
 
