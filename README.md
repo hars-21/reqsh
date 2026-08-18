@@ -49,7 +49,7 @@ You can also download a binary from the [releases page](https://github.com/hars-
 
 ### Demo
 
-<video src="assets/demo.mp4" controls width="800"></video>
+https://github.com/user-attachments/assets/2e2280cd-d754-4726-81ab-ebc5c393f6d6
 
 ### Usage
 
