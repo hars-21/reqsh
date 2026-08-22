@@ -202,7 +202,7 @@ impl ParserState {
         match action.as_str() {
             "set" => {
                 let name = self.next_string().ok_or(ParserError::MissingArgument)?;
-                let value = self.next_string().ok_or(ParserError::MissingArgument)?;
+                let value = self.collect(" ").ok_or(ParserError::MissingArgument)?;
                 Ok(Command::Variable(VariableCommand::Set { name, value }))
             }
 
@@ -443,6 +443,16 @@ mod tests {
         };
         assert_eq!(name, "Authorization");
         assert_eq!(value, "Bearer abc");
+    }
+
+    #[test]
+    fn variable_set_joins_multi_word_value() {
+        let command = parse("var set auth Bearer abc123").unwrap();
+        let Command::Variable(VariableCommand::Set { name, value }) = command else {
+            panic!("expected variable set command");
+        };
+        assert_eq!(name, "auth");
+        assert_eq!(value, "Bearer abc123");
     }
 
     #[test]
