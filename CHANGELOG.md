@@ -2,6 +2,16 @@
 
 Every release of reqsh, from the latest features to the smallest fixes.
 
+## [v0.3.3](https://github.com/hars-21/reqsh/compare/v0.3.2..v0.3.3) - 2026-08-22
+
+### Bug Fixes
+
+- `var set` truncates multi-word values in [#29](https://github.com/hars-21/reqsh/pull/29)
+
+### New Contributors
+
+* @chuanmuzhj made their first contribution in [#29](https://github.com/hars-21/reqsh/pull/29)
+
 ## [v0.3.1](https://github.com/hars-21/reqsh/compare/v0.3.0..v0.3.1) - 2026-08-07
 
 ### Bug Fixes
