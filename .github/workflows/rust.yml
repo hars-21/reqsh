@@ -2,9 +2,17 @@ name: Rust
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
+    paths-ignore:
+      - "assets/**"
+      - "docs/**"
+      - "website/**"
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+    paths-ignore:
+      - "assets/**"
+      - "docs/**"
+      - "website/**"
 
 env:
   CARGO_TERM_COLOR: always
@@ -15,11 +23,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Check formatting
-      run: cargo fmt --all -- --check
-    - name: Run clippy
-      run: cargo clippy -- -D warnings
+      - uses: actions/checkout@v4
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Run clippy
+        run: cargo clippy -- -D warnings
 
   test:
     name: Test (${{ matrix.os }})
@@ -31,25 +39,25 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
+      - uses: actions/checkout@v4
+      - name: Build
+        run: cargo build --verbose
+      - name: Run tests
+        run: cargo test --verbose
 
   linux-arm64:
     name: Build (aarch64-unknown-linux-gnu)
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        targets: aarch64-unknown-linux-gnu
-    - name: Install cross-compilation tools
-      uses: taiki-e/setup-cross-toolchain-action@v1
-      with:
-        target: aarch64-unknown-linux-gnu
-    - name: Build
-      run: cargo build --release --target aarch64-unknown-linux-gnu
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-unknown-linux-gnu
+      - name: Install cross-compilation tools
+        uses: taiki-e/setup-cross-toolchain-action@v1
+        with:
+          target: aarch64-unknown-linux-gnu
+      - name: Build
+        run: cargo build --release --target aarch64-unknown-linux-gnu
