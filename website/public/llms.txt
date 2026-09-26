@@ -1,0 +1,43 @@
+# reqsh
+
+> An interactive, persistent REPL shell for HTTP requests. Built in Rust for speed and simplicity.
+
+reqsh is a terminal-based HTTP client that lets you set a base URL, manage headers, use variables, save requests, and re-run them from history. It supports GET, POST, PUT, PATCH, DELETE and all other HTTP methods. Case-insensitive. No config files, no accounts, no runtime.
+
+## Key Features
+
+- Persistent REPL session with base URL and header management
+- Variable interpolation with `{{variable}}` syntax
+- Request history with instant rerun
+- Case-insensitive HTTP methods
+- Pretty-printed, syntax-highlighted JSON output
+- Built-in request timing
+- Multi-line request body support
+- Save and replay named requests
+
+## Install
+
+```sh
+curl -fsSL https://reqsh.dev/install.sh | sh
+```
+
+## Documentation
+
+- [Introduction](https://reqsh.dev/docs): Overview and quick start guide
+- [Installation](https://reqsh.dev/docs/install): Platform-specific install instructions for macOS, Linux, and Windows
+- [Usage](https://reqsh.dev/docs/usage): How to use reqsh for HTTP requests
+- [Commands](https://reqsh.dev/docs/commands): Full command reference
+- [Variables](https://reqsh.dev/docs/variables): Variable interpolation and session state
+- [Migration](https://reqsh.dev/docs/migration): Breaking changes in v0.3.0 and how to migrate from earlier versions
+- [Changelog](https://reqsh.dev/docs/changelog): Release history and what's new
+
+## Source
+
+- [GitHub Repository](https://github.com/hars-21/reqsh): Source code, issues, and contributions
+- [Releases](https://github.com/hars-21/reqsh/releases): Binary downloads and release notes
+- [License](https://github.com/hars-21/reqsh/blob/main/LICENSE): MIT License
+
+## Contact
+
+- Author: [hars-21](https://github.com/hars-21)
+- Website: [reqsh.dev](https://reqsh.dev)
