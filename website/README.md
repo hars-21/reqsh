@@ -17,15 +17,13 @@
 
 ## About
 
-This is the source code for **[reqsh.dev](https://reqsh.dev)** which serves the homepage, docs, changelog and roadmap for [reqsh](https://github.com/hars-21/reqsh).
-
-The main reqsh project lives at **[github.com/hars-21/reqsh](https://github.com/hars-21/reqsh)**.
+This directory contains **[reqsh.dev](https://reqsh.dev)**, the landing page and documentation site for reqsh. It lives inside the main reqsh repository so the website and product documentation change together.
 
 ## Tech Stack
 
 - [Next.js](https://nextjs.org) 16 (App Router)
+- [Fumadocs](https://fumadocs.dev) for documentation
 - [Tailwind CSS](https://tailwindcss.com) v4
-- [shadcn/ui](https://ui.shadcn.com)
 - [TypeScript](https://www.typescriptlang.org)
 
 ## Getting Started
@@ -35,10 +33,12 @@ pnpm install
 pnpm dev
 ```
 
-The docs are synced from the main repo on build:
+The site compiles documentation from `content/docs/`. The changelog is copied from the repository
+root before development and production builds:
 
 ```sh
-pnpm build  # runs sync-docs then next build
+pnpm sync:changelog
+pnpm build
 ```
 
 ## Project Structure
@@ -46,17 +46,18 @@ pnpm build  # runs sync-docs then next build
 ```
 src/
   app/
-    page.tsx            # Homepage
-    docs/               # Documentation pages
-    changelog/          # Changelog
-    roadmap/            # Roadmap
+    page.tsx            # Landing page
+    changelog/          # Generated changelog page
+    docs/               # Fumadocs routes and layout
     install.sh/         # Install script proxy
-    changelog.xml/      # RSS feed
-  components/           # UI components
-  lib/                  # Doc parsing and utilities
+  components/           # Shared site and MDX components
+  lib/source.ts         # Fumadocs sources for repository content
+content/
+  docs/                 # Product documentation
+  changelog.mdx         # Generated from ../CHANGELOG.md
 scripts/
-  sync-docs.ts          # Pulls docs from GitHub
-content/docs/           # Auto-generated (gitignored)
+  sync-changelog.mjs    # Generates the changelog content
+../src/                 # Rust CLI source
 ```
 
 ## License

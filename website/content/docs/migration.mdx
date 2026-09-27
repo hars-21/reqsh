@@ -1,10 +1,8 @@
 ---
-title: Migration Guide
+title: Migrating to v0.3.0
 description: Breaking changes in v0.3.0 and how to migrate from earlier versions.
 order: 6
 ---
-
-# Migrating to v0.3.0
 
 v0.3.0 is a major refactor of reqsh's internals (new lexer, parser and AST, split executor, reworked session management) and introduces several **breaking command changes**. The old `header <key> <value>`, `unset`, `vars`, `headers` and bare `save`/`run`/`requests` commands no longer exist, every session command now has an explicit, scoped form.
 
