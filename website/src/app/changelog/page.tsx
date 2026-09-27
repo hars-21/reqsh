@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
-import { readFileSync } from 'fs';
-import { join } from 'path';
-import MarkdownRenderer from '@/components/markdown-renderer';
-
-export const dynamic = 'force-dynamic';
+import { notFound } from 'next/navigation';
+import { DocsBody } from 'fumadocs-ui/layouts/docs/page';
+import { getMDXComponents } from '@/components/mdx';
+import { changelog } from '@/lib/source';
+import Footer from '@/components/footer';
+import Nav from '@/components/nav';
 
 const siteUrl = 'https://reqsh.dev';
 
@@ -12,9 +13,6 @@ export const metadata: Metadata = {
   description: 'Changelog and release history for reqsh.',
   alternates: {
     canonical: `${siteUrl}/changelog`,
-    types: {
-      'application/rss+xml': `${siteUrl}/changelog.xml`,
-    },
   },
   openGraph: {
     title: "What's New | reqsh",
@@ -31,23 +29,33 @@ export const metadata: Metadata = {
 };
 
 export default async function ChangelogPage() {
-  const filePath = join(process.cwd(), 'content', 'docs', 'changelog.md');
-  const content = readFileSync(filePath, 'utf-8');
+  const page = changelog.get('changelog.mdx');
+  if (!page) notFound();
+
+  const Content = page.body;
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-10">
-      <MarkdownRenderer content={content} />
+    <>
+      <Nav />
+      <main id="main-content" className="flex-1" tabIndex={-1}>
+        <div className="mx-auto max-w-2xl px-6 py-10">
+          <DocsBody>
+            <Content components={getMDXComponents()} />
+          </DocsBody>
 
-      <div className="mt-8">
-        <a
-          href="https://github.com/hars-21/reqsh/releases"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm font-medium text-foreground underline underline-offset-4 transition-colors hover:text-accent"
-        >
-          View all releases on GitHub
-        </a>
-      </div>
-    </div>
+          <div className="mt-8">
+            <a
+              href="https://github.com/hars-21/reqsh/releases"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-foreground underline underline-offset-4 transition-colors hover:text-accent"
+            >
+              View all releases on GitHub
+            </a>
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </>
   );
 }

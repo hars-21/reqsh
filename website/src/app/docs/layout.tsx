@@ -1,32 +1,14 @@
-import { getSidebarTree, getAllDocs } from '@/lib/docs';
-import DocsLayoutClient from '@/components/docs-layout-client';
+import type { ReactNode } from 'react';
+import { source } from '@/lib/source';
+import { DocsLayout } from 'fumadocs-ui/layouts/docs';
+import { baseOptions } from '@/lib/layout.shared';
 
-export default function DocsLayout({ children }: { children: React.ReactNode }) {
-  const tree = getSidebarTree();
-  const allDocs = getAllDocs();
-
-  const sidebarItems: { title: string; href: string; depth: number }[] = [];
-
-  function traverse(nodes: typeof tree, depth: number) {
-    for (const node of nodes) {
-      if (node.slug) {
-        sidebarItems.push({
-          title: node.title,
-          href: `/docs/${node.slug}`,
-          depth,
-        });
-      }
-      if (node.children.length > 0) {
-        traverse(node.children, depth + 1);
-      }
-    }
-  }
-
-  traverse(tree, 0);
-
+export default function Layout({ children }: { children: ReactNode }) {
   return (
-    <DocsLayoutClient sidebarItems={sidebarItems} allDocs={allDocs}>
-      {children}
-    </DocsLayoutClient>
+    <main id="main-content" className="min-h-screen" tabIndex={-1}>
+      <DocsLayout tree={source.getPageTree()} {...baseOptions()}>
+        {children}
+      </DocsLayout>
+    </main>
   );
 }

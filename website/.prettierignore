@@ -1,3 +1,5 @@
 # Ignore artifacts:
 build
 coverage
+.source
+content/changelog.mdx

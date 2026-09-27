@@ -14,7 +14,11 @@ export const metadata: Metadata = {
 
 export default function NotFound() {
   return (
-    <div className="mx-auto flex flex-col items-center justify-center py-24 px-6 text-center">
+    <main
+      id="main-content"
+      className="mx-auto flex flex-col items-center justify-center py-24 px-6 text-center"
+      tabIndex={-1}
+    >
       <div className="flex items-center justify-center gap-4 mt-12">
         <Image src="/logo.svg" alt="reqsh logo" width={84} height={84} />
 
@@ -36,6 +40,6 @@ export default function NotFound() {
         <ArrowLeft size={16} className="transition-snappy group-hover:-translate-x-1" />
         Back to Home
       </Link>
-    </div>
+    </main>
   );
 }

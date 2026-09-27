@@ -1,10 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter, Geist_Mono } from 'next/font/google';
+import { RootProvider } from 'fumadocs-ui/provider/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/next';
-import { ThemeProvider } from 'next-themes';
-import Nav from '@/components/nav';
-import Footer from '@/components/footer';
 import './globals.css';
 
 const inter = Inter({
@@ -64,9 +62,6 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: siteUrl,
-    types: {
-      'application/rss+xml': `${siteUrl}/changelog.xml`,
-    },
   },
 
   icons: {
@@ -129,7 +124,7 @@ export default function RootLayout({
         priceCurrency: 'USD',
       },
       screenshot: `${siteUrl}/opengraph-image`,
-      softwareVersion: '0.2.0',
+      softwareVersion: '0.3.3',
       applicationSuite: 'Terminal',
       featureList: [
         'Interactive REPL for HTTP requests',
@@ -140,7 +135,7 @@ export default function RootLayout({
         'Pretty-printed JSON output',
         'Built-in request timing',
       ],
-      repo: 'https://github.com/hars-21/reqsh',
+      codeRepository: 'https://github.com/hars-21/reqsh',
     },
     {
       '@context': 'https://schema.org',
@@ -154,24 +149,6 @@ export default function RootLayout({
         url: siteUrl,
       },
     },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        {
-          '@type': 'ListItem',
-          position: 1,
-          name: 'Home',
-          item: siteUrl,
-        },
-        {
-          '@type': 'ListItem',
-          position: 2,
-          name: 'Documentation',
-          item: `${siteUrl}/docs`,
-        },
-      ],
-    },
   ];
 
   return (
@@ -182,10 +159,6 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <link rel="preconnect" href="https://raw.githubusercontent.com" />
-        <link rel="preconnect" href="https://api.github.com" />
-        <link rel="dns-prefetch" href="https://raw.githubusercontent.com" />
-        <link rel="dns-prefetch" href="https://api.github.com" />
         <link rel="alternate" type="text/plain" href="/llms.txt" title="LLM-friendly docs" />
       </head>
       <body className="min-h-screen flex flex-col antialiased">
@@ -193,11 +166,12 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem={false}
-          disableTransitionOnChange
+        <RootProvider
+          theme={{
+            defaultTheme: 'dark',
+            enableSystem: false,
+            disableTransitionOnChange: true,
+          }}
         >
           <a
             href="#main-content"
@@ -205,12 +179,8 @@ export default function RootLayout({
           >
             Skip to content
           </a>
-          <Nav />
-          <main id="main-content" className="flex-1" tabIndex={-1}>
-            {children}
-          </main>
-          <Footer />
-        </ThemeProvider>
+          {children}
+        </RootProvider>
         <Analytics />
         <SpeedInsights />
       </body>
