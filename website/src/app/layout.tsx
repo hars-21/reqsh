@@ -168,7 +168,7 @@ export default function RootLayout({
         />
         <RootProvider
           theme={{
-            defaultTheme: 'dark',
+            defaultTheme: 'light',
             enableSystem: false,
             disableTransitionOnChange: true,
           }}

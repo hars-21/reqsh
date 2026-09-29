@@ -35,9 +35,9 @@ export default function NotFound() {
 
       <Link
         href="/"
-        className="group mt-10 flex items-center justify-center gap-2 rounded-full bg-accent px-8 py-3.5 text-sm font-bold text-accent-foreground transition-snappy hover:brightness-110 hover:shadow-[0_0_30px_-5px_color-mix(in_oklch,var(--accent)_45%,transparent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        className="mt-10 flex items-center justify-center gap-2 rounded-md bg-foreground px-6 py-3 text-sm font-medium text-background transition-colors hover:bg-foreground/85 focus-visible:outline-none"
       >
-        <ArrowLeft size={16} className="transition-snappy group-hover:-translate-x-1" />
+        <ArrowLeft size={16} />
         Back to Home
       </Link>
     </main>
