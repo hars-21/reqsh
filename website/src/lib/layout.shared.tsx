@@ -1,7 +1,9 @@
 import Image from 'next/image';
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 
-export function baseOptions(): BaseLayoutProps {
+export function baseOptions({
+  navOnlyLinks = false,
+}: { navOnlyLinks?: boolean } = {}): BaseLayoutProps {
   return {
     nav: {
       title: (
@@ -15,13 +17,14 @@ export function baseOptions(): BaseLayoutProps {
     githubUrl: 'https://github.com/hars-21/reqsh',
     links: [
       {
-        text: 'Changelog',
-        url: '/changelog',
+        text: 'Documentation',
+        url: '/docs',
+        on: navOnlyLinks ? 'nav' : 'all',
       },
       {
-        type: 'button',
-        text: 'Install',
-        url: '/docs/install',
+        text: 'Changelog',
+        url: '/changelog',
+        on: navOnlyLinks ? 'nav' : 'all',
       },
     ],
     themeSwitch: {
