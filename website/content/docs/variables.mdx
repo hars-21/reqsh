@@ -55,9 +55,9 @@ reqsh> var remove token
 ## Example Workflow
 
 ```sh
-reqsh> var set token eyJhbGciOiJIUzI1NiJ9
 reqsh> var set api https://api.example.com
-reqsh> GET {{api}}/users/{{token}}
+reqsh> var set user_id 42
+reqsh> GET {{api}}/users/{{user_id}}
 .....> ###
 HTTP/1.1 200 OK 142ms
 content-type: application/json

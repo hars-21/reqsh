@@ -1,65 +1,58 @@
-<p align="center">
-  <a href="https://reqsh.dev">
-    <img src="public/readme-banner.png" alt="reqsh.dev">
-  </a>
-</p>
+# reqsh website
 
-<p align="center">
-  <strong>The interactive shell for HTTP requests.</strong>
-</p>
+This directory contains the [reqsh](https://reqsh.dev) landing page and documentation site. The
+Rust CLI lives in the repository root; website changes should stay within this directory unless
+they also require a product or documentation update.
 
-<div align="center">
+## Stack
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-red.svg)](https://opensource.org/licenses/MIT)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+- Next.js 16 and React 19
+- TypeScript
+- Tailwind CSS 4
+- Fumadocs for documentation and search
 
-</div>
+## Project structure
 
-## About
+```text
+src/
+  app/          Routes, layouts, metadata, and global styles
+  components/   Shared React and MDX components
+  lib/          Fumadocs source and layout configuration
+content/docs/   Documentation pages
+public/         Static assets, including landing-page media
+scripts/        Build-time utilities
+```
 
-This directory contains **[reqsh.dev](https://reqsh.dev)**, the landing page and documentation site for reqsh. It lives inside the main reqsh repository so the website and product documentation change together.
+## Local development
 
-## Tech Stack
-
-- [Next.js](https://nextjs.org) 16 (App Router)
-- [Fumadocs](https://fumadocs.dev) for documentation
-- [Tailwind CSS](https://tailwindcss.com) v4
-- [TypeScript](https://www.typescriptlang.org)
-
-## Getting Started
+From this directory:
 
 ```sh
 pnpm install
 pnpm dev
 ```
 
-The site compiles documentation from `content/docs/`. The changelog is copied from the repository
-root before development and production builds:
+The local site is available at [http://localhost:3000](http://localhost:3000).
+
+## Commands
 
 ```sh
-pnpm sync:changelog
-pnpm build
+pnpm lint              # Run ESLint
+pnpm build             # Create a production build
+pnpm start             # Serve a completed production build
+pnpm sync:changelog    # Regenerate content/changelog.mdx
+pnpm format            # Format the repository with Prettier
 ```
 
-## Project Structure
+`pnpm dev` and `pnpm build` automatically regenerate the changelog. Do not edit
+`content/changelog.mdx` directly; update the repository-root `CHANGELOG.md` instead.
 
-```
-src/
-  app/
-    page.tsx            # Landing page
-    changelog/          # Generated changelog page
-    docs/               # Fumadocs routes and layout
-    install.sh/         # Install script proxy
-  components/           # Shared site and MDX components
-  lib/source.ts         # Fumadocs sources for repository content
-content/
-  docs/                 # Product documentation
-  changelog.mdx         # Generated from ../CHANGELOG.md
-scripts/
-  sync-changelog.mjs    # Generates the changelog content
-../src/                 # Rust CLI source
-```
+## Contributing
 
-## License
-
-[MIT](https://github.com/hars-21/reqsh/blob/main/LICENSE)
+1. Create a focused branch and make your change.
+2. Put documentation updates in `content/docs/`, route-level UI in `src/app/`, and reusable UI in
+   `src/components/`.
+3. Test affected pages in light and dark themes, including a narrow viewport for visual changes.
+4. Run `pnpm lint` and `pnpm build` before opening a pull request.
+5. In the pull request, describe the user-visible change and include screenshots or a recording for
+   UI work.

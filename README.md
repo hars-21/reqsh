@@ -45,7 +45,7 @@ Or via Cargo:
 cargo install reqsh
 ```
 
-You can also download a binary from the [releases page](https://github.com/hars-21/reqsh/releases/latest) or [build from source](docs/install.md).
+You can also download a binary from the [releases page](https://github.com/hars-21/reqsh/releases/latest) or [build from source](https://reqsh.dev/docs/install#build-from-source).
 
 ### Demo
 
@@ -65,7 +65,7 @@ reqsh> POST /users
 .....> ###
 ```
 
-For full documentation on commands, variables and usage see the [docs](docs/introduction.md).
+For full documentation on commands, variables and usage see the [docs](https://reqsh.dev/docs).
 
 ## Contributing
 
